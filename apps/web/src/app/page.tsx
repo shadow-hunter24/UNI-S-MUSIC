@@ -2,6 +2,17 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
 import { BottomNav } from '@/components/layout/BottomNav';
 
+const GENRES = [
+  { name: 'Afrobeats', slug: 'afrobeats' },
+  { name: 'Hip Hop', slug: 'hip-hop' },
+  { name: 'Gospel', slug: 'gospel' },
+  { name: 'R&B', slug: 'rnb' },
+  { name: 'Reggae', slug: 'reggae' },
+  { name: 'Drill', slug: 'drill' },
+  { name: 'Pop', slug: 'pop' },
+  { name: 'Jazz', slug: 'jazz' },
+];
+
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-bg flex flex-col">
@@ -33,17 +44,35 @@ export default function LandingPage() {
           </Link>
         </div>
 
-        {/* Genre teaser */}
-        <div className="mt-16 flex flex-wrap justify-center gap-2 max-w-sm">
-          {['Afrobeats', 'Hip Hop', 'Gospel', 'R&B', 'Reggae'].map((genre) => (
-            <span
-              key={genre}
-              className="px-3 py-1 rounded-full text-xs font-medium bg-bg-elevated text-text-secondary border border-bg-elevated"
-            >
-              {genre}
-            </span>
-          ))}
-        </div>
+        {/* Trending Now skeleton placeholders */}
+        <section className="mt-16 w-full max-w-sm" aria-label="Trending Now">
+          <h2 className="text-white font-semibold text-left mb-3">Trending Now</h2>
+          <div className="grid grid-cols-2 gap-3">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="bg-bg-elevated rounded-lg p-3 animate-pulse" aria-hidden="true">
+                <div className="aspect-square rounded-lg bg-bg-surface mb-2" />
+                <div className="h-3 bg-bg-surface rounded w-3/4 mb-1.5" />
+                <div className="h-2.5 bg-bg-surface rounded w-1/2" />
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Top Genres */}
+        <section className="mt-10 w-full max-w-sm" aria-label="Top Genres">
+          <h2 className="text-white font-semibold text-left mb-3">Top Genres</h2>
+          <div className="flex flex-wrap justify-start gap-2">
+            {GENRES.map((genre) => (
+              <Link
+                key={genre.slug}
+                href={`/genre/${genre.slug}`}
+                className="px-3 py-1 rounded-full text-xs font-medium bg-primary/20 text-primary border border-primary/30 hover:bg-primary/30 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+              >
+                {genre.name}
+              </Link>
+            ))}
+          </div>
+        </section>
       </main>
 
       <BottomNav />
