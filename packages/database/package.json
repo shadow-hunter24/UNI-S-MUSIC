@@ -10,13 +10,17 @@
     "migrate": "prisma migrate dev",
     "seed": "ts-node prisma/seed.ts"
   },
+  "prisma": {
+    "seed": "ts-node prisma/seed.ts"
+  },
   "dependencies": {
     "@prisma/client": "^5.14.0"
   },
   "devDependencies": {
+    "@types/node": "^20.14.2",
+    "argon2": "^0.45.2",
     "prisma": "^5.14.0",
-    "typescript": "^5.4.5",
     "ts-node": "^10.9.2",
-    "@types/node": "^20.14.2"
+    "typescript": "^5.4.5"
   }
 }

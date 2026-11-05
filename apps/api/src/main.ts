@@ -5,6 +5,7 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import helmet from 'helmet';
 import compression from 'compression';
+import cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -14,6 +15,7 @@ async function bootstrap() {
   // Security headers
   app.use(helmet());
   app.use(compression());
+  app.use(cookieParser());
 
   // CORS
   const webUrl = process.env.WEB_URL ?? 'http://localhost:3000';

@@ -11,5 +11,13 @@ export const envValidationSchema = Joi.object({
     then: Joi.string().min(32).required(),
     otherwise: Joi.string().default('dev_secret_replace_in_production'),
   }),
+  JWT_SECRET: Joi.when('NODE_ENV', {
+    is: 'production',
+    then: Joi.string().min(32).required(),
+    otherwise: Joi.string().default('dev_jwt_secret_replace_in_production'),
+  }),
+  JWT_EXPIRES_IN: Joi.string().default('15m'),
+  THROTTLE_TTL: Joi.number().default(60),
+  THROTTLE_LIMIT: Joi.number().default(10),
   LOG_LEVEL: Joi.string().default('debug'),
 });

@@ -29,14 +29,20 @@ enum TrackStatus {
 }
 
 model User {
-  id            String   @id @default(uuid())
-  email         String   @unique
-  passwordHash  String
-  username      String   @unique
-  role          UserRole @default(LISTENER)
-  emailVerified Boolean  @default(false)
-  createdAt     DateTime @default(now()) @db.Timestamptz()
-  updatedAt     DateTime @updatedAt @db.Timestamptz()
+  id                         String    @id @default(uuid())
+  email                      String    @unique
+  passwordHash               String
+  username                   String    @unique
+  role                       UserRole  @default(LISTENER)
+  emailVerified              Boolean   @default(false)
+  emailVerificationToken     String?   @unique
+  emailVerificationExpiresAt DateTime? @db.Timestamptz()
+  passwordResetToken         String?   @unique
+  passwordResetExpiresAt     DateTime? @db.Timestamptz()
+  mfaEnabled                 Boolean   @default(false)
+  mfaSecret                  String?
+  createdAt                  DateTime  @default(now()) @db.Timestamptz()
+  updatedAt                  DateTime  @updatedAt @db.Timestamptz()
 
   profile       UserProfile?
   artistProfile ArtistProfile?
@@ -66,6 +72,8 @@ model Session {
   userId    String
   token     String   @unique
   expiresAt DateTime @db.Timestamptz()
+  ipAddress String?
+  userAgent String?
   createdAt DateTime @default(now()) @db.Timestamptz()
 
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -180,10 +188,11 @@ model AuditLog {
   id         String   @id @default(uuid())
   actorId    String?
   action     String
-  entityType String
+  entityType String?
   entityId   String?
   metadata   Json?
   ipAddress  String?
+  userAgent  String?
   createdAt  DateTime @default(now()) @db.Timestamptz()
 
   actor      User?    @relation(fields: [actorId], references: [id], onDelete: SetNull)

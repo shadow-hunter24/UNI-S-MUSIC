@@ -1,4 +1,5 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, UserRole } from '@prisma/client';
+import * as argon2 from 'argon2';
 
 const prisma = new PrismaClient();
 
@@ -25,6 +26,22 @@ async function main() {
     });
   }
   console.log(`Seeded ${genres.length} genres.`);
+
+  // Dev-only admin user — never for production
+  console.log('Seeding admin user...');
+  const passwordHash = await argon2.hash('Admin1234!', { type: argon2.argon2id });
+  await prisma.user.upsert({
+    where: { email: 'admin@unismusic.dev' },
+    update: {},
+    create: {
+      email: 'admin@unismusic.dev',
+      username: 'admin',
+      passwordHash,
+      role: UserRole.ADMIN,
+      emailVerified: true,
+    },
+  });
+  console.log('Seeded admin user.');
 }
 
 main()
