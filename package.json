@@ -1,0 +1,14 @@
+{
+  "name": "unis-music",
+  "private": true,
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "dev": "pnpm -r --parallel dev"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.5"
+  }
+}
