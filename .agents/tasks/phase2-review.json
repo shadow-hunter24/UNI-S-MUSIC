@@ -1,0 +1,54 @@
+{
+  "verdict": "CHANGES_REQUESTED",
+  "findings": [
+    {
+      "severity": "HIGH",
+      "file": "apps/api/src/auth/auth.service.ts",
+      "issue": "login() returns { accessToken, user } in the response body while also setting an HttpOnly cookie. The raw JWT is exposed to JavaScript on every login, defeating the purpose of HttpOnly.",
+      "suggestion": "Remove the accessToken field from the return value. Return only { user } and rely on the cookie for token delivery."
+    },
+    {
+      "severity": "HIGH",
+      "file": "apps/api/src/auth/guards/mfa.guard.ts",
+      "issue": "MfaGuard checks req.user.mfaVerified from the JWT payload, but the login endpoint hard-codes mfaVerified: false and no endpoint ever issues a token with mfaVerified: true. ADMIN and FINANCE users are permanently blocked by the guard.",
+      "suggestion": "Add a POST /mfa/challenge endpoint that accepts a TOTP code, validates it, and returns a new JWT with mfaVerified: true. Until then, do not apply MfaGuard to production routes."
+    },
+    {
+      "severity": "HIGH",
+      "file": "apps/web/src/app/auth/verify-email/page.tsx",
+      "issue": "The verification token is sent as a query string parameter on a POST request (?token=...). Query string values appear in server access logs and browser history.",
+      "suggestion": "Move the token to the POST body: body: JSON.stringify({ token }). Update the controller to read @Body('token') instead of @Query('token')."
+    },
+    {
+      "severity": "MEDIUM",
+      "file": "packages/database/prisma/schema.prisma",
+      "issue": "Session.token is populated at login with a random hex string but is never read by JwtStrategy. It implies a token-binding check that doesn't exist, creating a misleading security signal.",
+      "suggestion": "Either add a binding check in JwtStrategy (compare the stored token against the cookie value) or remove the column."
+    },
+    {
+      "severity": "MEDIUM",
+      "file": "apps/api/src/auth/auth.service.ts",
+      "issue": "User.emailVerificationToken is stored as plaintext. A DB read yields a live verification credential. Password reset tokens are correctly SHA-256 hashed; email tokens should be consistent.",
+      "suggestion": "Hash the token with crypto.createHash('sha256').update(token).digest('hex') before storing. Re-hash in verifyEmail() before the findUnique lookup."
+    },
+    {
+      "severity": "MEDIUM",
+      "file": "apps/api/src/auth/auth.controller.ts",
+      "issue": "POST /request-password-reset uses @Body('email') email: string instead of a DTO. The email is never validated for format before reaching usersService.findByEmail().",
+      "suggestion": "Create a RequestPasswordResetDto with @IsEmail() and use it as the body type."
+    },
+    {
+      "severity": "MEDIUM",
+      "file": "apps/api/src/auth/auth.controller.ts",
+      "issue": "POST /reset-password has no @Throttle decorator. It inherits the global 10/min default, inconsistent with every other sensitive auth endpoint.",
+      "suggestion": "Add @Throttle({ default: { limit: 5, ttl: 60000 } }) to the resetPassword handler."
+    },
+    {
+      "severity": "MEDIUM",
+      "file": "apps/api/src/auth/auth.service.spec.ts",
+      "issue": "logout, setupMfa, verifyMfa, and validateUser have no test coverage. The MFA enforcement bug (finding #2) would be caught by a verifyMfa test asserting the response JWT contains mfaVerified: true.",
+      "suggestion": "Add test cases for these four methods before the MFA feature is considered shippable."
+    }
+  ],
+  "reviewDoc": "c:\\Users\\AHMED MANUEL BOATENG\\Downloads\\UNIS MUSIC\\.agents\\tasks\\phase2-code-review.md"
+}

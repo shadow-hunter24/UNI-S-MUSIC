@@ -15,6 +15,7 @@ import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { RequestPasswordResetDto } from './dto/request-password-reset.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { RolesGuard } from './guards/roles.guard';
 import { Roles } from './decorators/roles.decorator';
@@ -60,19 +61,20 @@ export class AuthController {
 
   @Post('verify-email')
   @HttpCode(HttpStatus.OK)
-  async verifyEmail(@Query('token') token: string) {
+  async verifyEmail(@Body('token') token: string) {
     return this.authService.verifyEmail(token);
   }
 
   @Post('request-password-reset')
   @HttpCode(HttpStatus.OK)
   @Throttle({ default: { limit: 3, ttl: 60000 } })
-  async requestPasswordReset(@Body('email') email: string, @Req() req: Request) {
-    return this.authService.requestPasswordReset(email, req.ip, req.headers['user-agent']);
+  async requestPasswordReset(@Body() dto: RequestPasswordResetDto, @Req() req: Request) {
+    return this.authService.requestPasswordReset(dto.email, req.ip, req.headers['user-agent']);
   }
 
   @Post('reset-password')
   @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   async resetPassword(@Body() dto: ResetPasswordDto, @Req() req: Request) {
     return this.authService.resetPassword(dto, req.ip, req.headers['user-agent']);
   }
@@ -89,5 +91,30 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   async verifyMfa(@CurrentUser() user: AuthenticatedUser, @Body('code') code: string) {
     return this.authService.verifyMfa(user.sub, code);
+  }
+
+  /**
+   * MFA challenge: called after login by ADMIN/FINANCE users to elevate
+   * their session to mfaVerified: true. Returns a new HttpOnly cookie.
+   */
+  @Post('mfa/challenge')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(JwtAuthGuard)
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  async mfaChallenge(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body('code') code: string,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    return this.authService.mfaChallenge(
+      user.sub,
+      user.sessionId,
+      code,
+      res,
+      req,
+      req.ip,
+      req.headers['user-agent'],
+    );
   }
 }

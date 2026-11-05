@@ -19,7 +19,7 @@ import * as crypto from 'crypto';
 import * as speakeasy from 'speakeasy';
 import * as qrcode from 'qrcode';
 import { UserRole } from '@prisma/client';
-import { Response } from 'express';
+import { Response, Request } from 'express';
 
 @Injectable()
 export class AuthService {
@@ -45,6 +45,8 @@ export class AuthService {
 
     const passwordHash = await argon2.hash(dto.password, { type: argon2.argon2id });
     const verificationToken = crypto.randomBytes(32).toString('hex');
+    // Hash before storing so a DB read never yields a live credential
+    const verificationTokenHash = crypto.createHash('sha256').update(verificationToken).digest('hex');
     const verificationExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
     const user = await this.prisma.user.create({
@@ -52,7 +54,7 @@ export class AuthService {
         email: dto.email.toLowerCase(),
         username: dto.username,
         passwordHash,
-        emailVerificationToken: verificationToken,
+        emailVerificationToken: verificationTokenHash,
         emailVerificationExpiresAt: verificationExpiry,
       },
     });
@@ -136,6 +138,12 @@ export class AuthService {
     };
     const accessToken = this.jwtService.sign(payload);
 
+    // Store the signed JWT in the session token column for binding validation
+    await this.prisma.session.update({
+      where: { id: session.id },
+      data: { token: accessToken },
+    });
+
     res.cookie('access_token', accessToken, {
       httpOnly: true,
       secure: this.configService.get('NODE_ENV') === 'production',
@@ -154,8 +162,8 @@ export class AuthService {
       },
     });
 
+    // Do not return the raw accessToken — delivery is via HttpOnly cookie only
     return {
-      accessToken,
       user: this.usersService.safeUser(user as unknown as Record<string, unknown>),
     };
   }
@@ -180,7 +188,8 @@ export class AuthService {
   }
 
   async verifyEmail(token: string) {
-    const user = await this.prisma.user.findUnique({ where: { emailVerificationToken: token } });
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+    const user = await this.prisma.user.findUnique({ where: { emailVerificationToken: tokenHash } });
     if (!user) throw new BadRequestException('Invalid verification token');
     if (user.emailVerificationExpiresAt && user.emailVerificationExpiresAt < new Date()) {
       throw new BadRequestException('Verification token has expired');
@@ -303,6 +312,93 @@ export class AuthService {
       },
     });
     return { message: 'MFA enabled successfully' };
+  }
+
+  /**
+   * MFA challenge: validates a TOTP code for an already-logged-in privileged user,
+   * then rotates the session JWT to include mfaVerified: true.
+   */
+  async mfaChallenge(
+    userId: string,
+    sessionId: string,
+    code: string,
+    res: Response,
+    req: Request,
+    ipAddress?: string,
+    userAgent?: string,
+  ) {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw new UnauthorizedException('User not found');
+    if (!user.mfaEnabled || !user.mfaSecret) {
+      throw new BadRequestException('MFA is not enabled for this account');
+    }
+
+    const valid = speakeasy.totp.verify({
+      secret: user.mfaSecret,
+      encoding: 'base32',
+      token: code,
+      window: 1,
+    });
+    if (!valid) {
+      await this.prisma.auditLog.create({
+        data: {
+          actorId: userId,
+          action: 'MFA_CHALLENGE_FAILED',
+          entityType: 'User',
+          entityId: userId,
+          ipAddress,
+          userAgent,
+        },
+      });
+      throw new UnauthorizedException('Invalid MFA code');
+    }
+
+    // Rotate session: delete old, create new with mfaVerified: true
+    await this.prisma.session.delete({ where: { id: sessionId } });
+    const newSession = await this.prisma.session.create({
+      data: {
+        userId,
+        token: '',
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        ipAddress,
+        userAgent,
+      },
+    });
+
+    const payload = {
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+      sessionId: newSession.id,
+      mfaVerified: true,
+    };
+    const newToken = this.jwtService.sign(payload);
+
+    // Store the JWT in the session token column for binding validation
+    await this.prisma.session.update({
+      where: { id: newSession.id },
+      data: { token: newToken },
+    });
+
+    res.cookie('access_token', newToken, {
+      httpOnly: true,
+      secure: this.configService.get('NODE_ENV') === 'production',
+      sameSite: 'strict',
+      maxAge: 15 * 60 * 1000,
+    });
+
+    await this.prisma.auditLog.create({
+      data: {
+        actorId: userId,
+        action: 'MFA_CHALLENGE_PASSED',
+        entityType: 'User',
+        entityId: userId,
+        ipAddress,
+        userAgent,
+      },
+    });
+
+    return { mfaVerified: true };
   }
 
   async validateMfaToken(userId: string, code: string): Promise<boolean> {

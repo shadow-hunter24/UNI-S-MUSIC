@@ -1,0 +1,31 @@
+{
+  "verdict": "CHANGES_REQUESTED",
+  "findings": [
+    {
+      "severity": "HIGH",
+      "label": "Non-atomic artist apply",
+      "detail": "apply() calls artistProfile.create then user.update({ role: 'ARTIST' }) in two separate operations. A failure between them leaves the user with an ArtistProfile but LISTENER role, permanently locking them out of GET /artists/me and PATCH /artists/me. Fix: wrap both writes in this.prisma.$transaction([...])."
+    },
+    {
+      "severity": "MEDIUM",
+      "label": "unfollowArtist counter can go negative",
+      "detail": "The existence check runs outside the transaction. Two concurrent unfollow calls can both pass the findUnique check; the second delete inside the transaction throws P2025, but totalFollowers may have already been decremented. The Int column has no non-negative constraint, so the counter can go negative."
+    },
+    {
+      "severity": "MEDIUM",
+      "label": "genre filter silently ignored on unknown slug",
+      "detail": "In TracksService.getPublishedTracks, if query.genre is provided but the genre is not found, the filter is silently dropped and the full published catalogue is returned. A caller filtering by ?genre=typo receives all tracks with no indication the filter was ignored."
+    },
+    {
+      "severity": "MEDIUM",
+      "label": "getTrending fallback discards recent results",
+      "detail": "When fewer than limit tracks exist in the 7-day window, all recent results are discarded and replaced by an all-time query. The caller receives a silently different dataset. The fallback path has no test coverage."
+    },
+    {
+      "severity": "LOW",
+      "label": "Missing tests for FeedService",
+      "detail": "getFeed, getTrending (including the fallback branch), and getNewReleases have no test coverage. The PUBLISHED filter in feed queries is unverified by tests. ArtistsService.apply non-atomic path is also untested."
+    }
+  ],
+  "reviewDoc": "c:\\Users\\AHMED MANUEL BOATENG\\Downloads\\UNIS MUSIC\\.agents\\tasks\\phase3-code-review.md"
+}
