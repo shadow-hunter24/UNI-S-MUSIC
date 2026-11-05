@@ -1,0 +1,6 @@
+{
+  "name": "@unis-music/config",
+  "version": "0.0.1",
+  "private": true,
+  "files": ["tsconfig.base.json", "tsconfig.nextjs.json", "tsconfig.nestjs.json", ".eslintrc.base.js"]
+}

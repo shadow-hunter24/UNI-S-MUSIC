@@ -1,0 +1,190 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  LISTENER
+  ARTIST
+  MODERATOR
+  FINANCE
+  ADMIN
+}
+
+enum TrackStatus {
+  DRAFT
+  UPLOADING
+  PROCESSING
+  PROCESSING_FAILED
+  PENDING_REVIEW
+  REJECTED
+  SCHEDULED
+  PUBLISHED
+  TAKEN_DOWN
+  ARCHIVED
+}
+
+model User {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  passwordHash  String
+  username      String   @unique
+  role          UserRole @default(LISTENER)
+  emailVerified Boolean  @default(false)
+  createdAt     DateTime @default(now()) @db.Timestamptz()
+  updatedAt     DateTime @updatedAt @db.Timestamptz()
+
+  profile       UserProfile?
+  artistProfile ArtistProfile?
+  sessions      Session[]
+  tracks        Track[]       @relation("ArtistTracks")
+  likes         Like[]
+  playlists     Playlist[]
+  followedBy    Follow[]      @relation("FollowFollowing")
+  following     Follow[]      @relation("FollowFollower")
+  auditLogs     AuditLog[]
+}
+
+model UserProfile {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  displayName String?
+  bio         String?
+  avatarUrl   String?
+  createdAt   DateTime @default(now()) @db.Timestamptz()
+  updatedAt   DateTime @updatedAt @db.Timestamptz()
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Session {
+  id        String   @id @default(uuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime @db.Timestamptz()
+  createdAt DateTime @default(now()) @db.Timestamptz()
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model ArtistProfile {
+  id         String   @id @default(uuid())
+  userId     String   @unique
+  stageName  String   @unique
+  bio        String?
+  imageUrl   String?
+  isVerified Boolean  @default(false)
+  createdAt  DateTime @default(now()) @db.Timestamptz()
+  updatedAt  DateTime @updatedAt @db.Timestamptz()
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tracks     Track[]
+}
+
+model Genre {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  slug      String   @unique
+  createdAt DateTime @default(now()) @db.Timestamptz()
+
+  tracks    Track[]
+}
+
+model Track {
+  id              String        @id @default(uuid())
+  artistProfileId String
+  title           String
+  description     String?
+  status          TrackStatus   @default(DRAFT)
+  genreId         String?
+  durationSeconds Int?
+  explicit        Boolean       @default(false)
+  releaseDate     DateTime?     @db.Timestamptz()
+  playCount       BigInt        @default(0)
+  createdAt       DateTime      @default(now()) @db.Timestamptz()
+  updatedAt       DateTime      @updatedAt @db.Timestamptz()
+
+  artistProfile   ArtistProfile @relation(fields: [artistProfileId], references: [id])
+  genre           Genre?        @relation(fields: [genreId], references: [id])
+  mediaAssets     MediaAsset[]
+  likes           Like[]
+  playlistTracks  PlaylistTrack[]
+  uploadedBy      User?         @relation("ArtistTracks", fields: [uploadedById], references: [id])
+  uploadedById    String?
+}
+
+model MediaAsset {
+  id            String   @id @default(uuid())
+  trackId       String
+  assetType     String
+  storageKey    String
+  mimeType      String
+  fileSizeBytes BigInt
+  checksum      String
+  createdAt     DateTime @default(now()) @db.Timestamptz()
+
+  track         Track    @relation(fields: [trackId], references: [id], onDelete: Cascade)
+}
+
+model Follow {
+  followerId  String
+  followingId String
+  createdAt   DateTime @default(now()) @db.Timestamptz()
+
+  follower    User     @relation("FollowFollower", fields: [followerId], references: [id], onDelete: Cascade)
+  following   User     @relation("FollowFollowing", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@id([followerId, followingId])
+}
+
+model Like {
+  userId    String
+  trackId   String
+  createdAt DateTime @default(now()) @db.Timestamptz()
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  track     Track    @relation(fields: [trackId], references: [id], onDelete: Cascade)
+
+  @@id([userId, trackId])
+}
+
+model Playlist {
+  id        String          @id @default(uuid())
+  userId    String
+  title     String
+  isPublic  Boolean         @default(false)
+  createdAt DateTime        @default(now()) @db.Timestamptz()
+  updatedAt DateTime        @updatedAt @db.Timestamptz()
+
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tracks    PlaylistTrack[]
+}
+
+model PlaylistTrack {
+  playlistId String
+  trackId    String
+  position   Int
+  addedAt    DateTime @default(now()) @db.Timestamptz()
+
+  playlist   Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+  track      Track    @relation(fields: [trackId], references: [id], onDelete: Cascade)
+
+  @@id([playlistId, trackId])
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  actorId    String?
+  action     String
+  entityType String
+  entityId   String?
+  metadata   Json?
+  ipAddress  String?
+  createdAt  DateTime @default(now()) @db.Timestamptz()
+
+  actor      User?    @relation(fields: [actorId], references: [id], onDelete: SetNull)
+}
