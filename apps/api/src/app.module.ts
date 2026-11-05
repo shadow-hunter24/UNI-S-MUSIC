@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import * as path from 'path';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { envValidationSchema } from './config/env.validation';
@@ -18,6 +19,8 @@ import { SearchModule } from './search/search.module';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      // .env lives at the monorepo root — two levels up from apps/api
+      envFilePath: path.resolve(__dirname, '..', '..', '..', '.env'),
       validationSchema: envValidationSchema,
       validationOptions: { allowUnknown: true, abortEarly: false },
     }),

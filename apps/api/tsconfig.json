@@ -1,6 +1,7 @@
 {
   "extends": "@unis-music/config/tsconfig.nestjs.json",
   "compilerOptions": {
+    "ignoreDeprecations": "6.0",
     "outDir": "./dist",
     "rootDir": "./src",
     "paths": { "@unis-music/*": ["../../packages/*/src"] }

@@ -28,7 +28,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`dark ${inter.variable}`}>
-      <body className="min-h-screen bg-bg text-text-primary antialiased">
+      <body className="min-h-screen bg-bg text-white antialiased" style={{ background: '#0d0121' }}>
         <QueryProvider>{children}</QueryProvider>
       </body>
     </html>

@@ -1,6 +1,6 @@
 'use client';
 import { useState } from 'react';
-import { Heart, Play } from 'lucide-react';
+import { Heart, Play, Music } from 'lucide-react';
 import clsx from 'clsx';
 import { apiFetch } from '@/lib/api';
 
@@ -15,23 +15,15 @@ interface TrackCardProps {
   isLiked?: boolean;
 }
 
-function formatPlayCount(count: number): string {
-  if (count >= 1_000_000) return `${(count / 1_000_000).toFixed(1)}M`;
-  if (count >= 1_000) return `${(count / 1_000).toFixed(1)}K`;
-  return String(count);
+function fmt(n: number) {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
+  return String(n);
 }
 
-export function TrackCard({
-  id,
-  title,
-  artistName,
-  coverImageUrl,
-  playCount,
-  likeCount,
-  isLiked: initialLiked = false,
-}: TrackCardProps) {
-  const [liked, setLiked] = useState(initialLiked);
-  const [likeCountState, setLikeCountState] = useState(likeCount);
+export function TrackCard({ id, title, artistName, coverImageUrl, playCount, likeCount, isLiked: init = false }: TrackCardProps) {
+  const [liked, setLiked] = useState(init);
+  const [likes, setLikes] = useState(likeCount);
   const [loading, setLoading] = useState(false);
 
   async function toggleLike() {
@@ -40,61 +32,47 @@ export function TrackCard({
     try {
       if (liked) {
         await apiFetch(`/api/v1/tracks/${id}/like`, { method: 'DELETE' });
-        setLiked(false);
-        setLikeCountState((c) => Math.max(0, c - 1));
+        setLiked(false); setLikes((c) => Math.max(0, c - 1));
       } else {
         await apiFetch(`/api/v1/tracks/${id}/like`, { method: 'POST' });
-        setLiked(true);
-        setLikeCountState((c) => c + 1);
+        setLiked(true); setLikes((c) => c + 1);
       }
-    } catch {
-      // silently fail if not authenticated
-    } finally {
-      setLoading(false);
-    }
+    } catch { /* silent */ } finally { setLoading(false); }
   }
 
   return (
     <article
-      className="bg-bg-elevated rounded-lg overflow-hidden flex flex-col gap-2 p-3 hover:bg-bg-elevated/80 transition-colors"
+      className="group flex flex-col gap-2 p-3 rounded-xl cursor-pointer transition-all hover:scale-[1.03]"
+      style={{ background: 'linear-gradient(135deg,rgba(42,13,74,0.7),rgba(26,5,51,0.85))', border: '1px solid rgba(168,85,247,0.18)' }}
       aria-label={`${title} by ${artistName}`}
     >
-      {/* Cover art */}
-      <div className="aspect-square rounded-lg overflow-hidden bg-bg-surface flex items-center justify-center relative group">
-        {coverImageUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={coverImageUrl} alt={`${title} cover`} className="w-full h-full object-cover" />
-        ) : (
-          <div className="w-full h-full bg-gradient-to-br from-primary/30 to-accent/20 flex items-center justify-center">
-            <Play className="w-8 h-8 text-primary/60" aria-hidden="true" />
+      {/* Cover */}
+      <div className="aspect-square rounded-lg overflow-hidden relative flex items-center justify-center" style={{ background: 'linear-gradient(135deg,rgba(124,58,237,0.4),rgba(168,85,247,0.2))' }}>
+        {coverImageUrl
+          ? <img src={coverImageUrl} alt={`${title} cover`} className="w-full h-full object-cover" />
+          : <Music className="w-8 h-8 text-purple-400/50" aria-hidden="true" />
+        }
+        {/* Play overlay */}
+        <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity" style={{ background: 'rgba(0,0,0,0.4)' }}>
+          <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: 'linear-gradient(135deg,#7c3aed,#a855f7)', boxShadow: '0 0 20px rgba(124,58,237,0.6)' }}>
+            <Play className="w-4 h-4 text-white fill-white" aria-hidden="true" />
           </div>
-        )}
+        </div>
       </div>
 
-      {/* Track info */}
-      <div className="flex flex-col gap-0.5 min-w-0">
-        <p className="text-white font-medium text-sm truncate">{title}</p>
-        <p className="text-text-secondary text-xs truncate">{artistName}</p>
+      {/* Info */}
+      <div className="min-w-0">
+        <p className="text-white font-semibold text-xs truncate">{title}</p>
+        <p className="text-xs truncate" style={{ color: 'rgba(196,181,212,0.7)' }}>{artistName}</p>
       </div>
 
       {/* Actions */}
       <div className="flex items-center justify-between">
-        <span className="text-text-secondary text-xs">{formatPlayCount(playCount)} plays</span>
-        <button
-          onClick={toggleLike}
-          disabled={loading}
-          aria-label={liked ? 'Unlike track' : 'Like track'}
-          aria-pressed={liked}
-          className={clsx(
-            'flex items-center gap-1 text-xs transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded',
-            liked ? 'text-red-500' : 'text-text-secondary hover:text-red-400',
-          )}
-        >
-          <Heart
-            className={clsx('w-4 h-4', liked && 'fill-current')}
-            aria-hidden="true"
-          />
-          <span>{likeCountState}</span>
+        <span className="text-xs" style={{ color: 'rgba(196,181,212,0.5)' }}>{fmt(playCount)}</span>
+        <button onClick={toggleLike} disabled={loading} aria-label={liked ? 'Unlike' : 'Like'} aria-pressed={liked}
+          className={clsx('flex items-center gap-1 text-xs transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 rounded', liked ? 'text-red-400' : 'text-purple-400/50 hover:text-red-400')}>
+          <Heart className={clsx('w-3.5 h-3.5', liked && 'fill-current')} style={liked ? { filter: 'drop-shadow(0 0 4px rgba(248,113,113,0.8))' } : undefined} aria-hidden="true" />
+          <span>{likes}</span>
         </button>
       </div>
     </article>
