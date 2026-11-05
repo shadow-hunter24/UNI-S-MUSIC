@@ -155,11 +155,17 @@ export class ArtistsService {
     });
     if (!artist) throw new NotFoundException('Artist not found');
 
+    // Check if already following — only create and increment when the row is new
+    const existing = await this.prisma.follow.findUnique({
+      where: { followerId_followingArtistId: { followerId: userId, followingArtistId: artistId } },
+    });
+    if (existing) {
+      return { message: 'Already following artist' };
+    }
+
     await this.prisma.$transaction([
-      this.prisma.follow.upsert({
-        where: { followerId_followingArtistId: { followerId: userId, followingArtistId: artistId } },
-        create: { followerId: userId, followingArtistId: artistId },
-        update: {},
+      this.prisma.follow.create({
+        data: { followerId: userId, followingArtistId: artistId },
       }),
       this.prisma.artistProfile.update({
         where: { id: artistId },
@@ -199,14 +205,19 @@ export class ArtistsService {
     });
     if (!artist) throw new NotFoundException('Artist not found');
 
+    // Decode the opaque cursor back to the internal followerId
+    const decodedCursor = cursor
+      ? Buffer.from(cursor, 'base64').toString('utf8')
+      : undefined;
+
     const follows = await this.prisma.follow.findMany({
       where: { followingArtistId: artistId },
       take: limit + 1,
-      ...(cursor
+      ...(decodedCursor
         ? {
             cursor: {
               followerId_followingArtistId: {
-                followerId: cursor,
+                followerId: decodedCursor,
                 followingArtistId: artistId,
               },
             },
@@ -223,7 +234,10 @@ export class ArtistsService {
 
     const hasNext = follows.length > limit;
     const items = hasNext ? follows.slice(0, limit) : follows;
-    const nextCursor = hasNext ? items[items.length - 1]?.followerId : undefined;
+    // Encode the internal followerId as base64 so it is opaque in the public API
+    const nextCursor = hasNext
+      ? Buffer.from(items[items.length - 1]!.followerId, 'utf8').toString('base64')
+      : undefined;
 
     return {
       items: items.map((f) => ({

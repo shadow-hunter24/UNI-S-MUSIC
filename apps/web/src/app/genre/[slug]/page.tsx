@@ -1,6 +1,5 @@
 'use client';
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery } from '@tanstack/react-query';
 import { useParams } from 'next/navigation';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { TrackCard } from '@/components/music/TrackCard';
@@ -17,36 +16,33 @@ interface GenrePage {
 export default function GenrePage() {
   const params = useParams<{ slug: string }>();
   const slug = params?.slug ?? '';
-  const [cursor, setCursor] = useState<string | undefined>();
-  const [allTracks, setAllTracks] = useState<TrackDto[]>([]);
 
-  const { data, isLoading, isFetching } = useQuery({
-    queryKey: ['genre', slug, cursor],
-    queryFn: async () => {
-      const url = `/api/v1/genres/${slug}${cursor ? `?cursor=${cursor}` : ''}`;
-      const result = await apiFetch<GenrePage>(url);
-      if (cursor) {
-        setAllTracks((prev) => [...prev, ...result.tracks]);
-      } else {
-        setAllTracks(result.tracks);
-      }
-      return result;
+  const {
+    data,
+    isLoading,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+  } = useInfiniteQuery({
+    queryKey: ['genre', slug],
+    queryFn: ({ pageParam }: { pageParam?: string }) => {
+      const url = `/api/v1/genres/${slug}${pageParam ? `?cursor=${pageParam}` : ''}`;
+      return apiFetch<GenrePage>(url);
     },
+    initialPageParam: undefined as string | undefined,
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
     enabled: !!slug,
   });
 
-  function loadMore() {
-    if (data?.nextCursor) {
-      setCursor(data.nextCursor);
-    }
-  }
-
-  const tracks = cursor ? allTracks : (data?.tracks ?? []);
+  // Flatten all pages into a single track list — avoids duplicate-first-page
+  // issue that arises when using manual state accumulation with useQuery.
+  const tracks = data?.pages.flatMap((page) => page.tracks) ?? [];
+  const genreMeta = data?.pages[0]?.genre;
 
   return (
     <div className="min-h-screen bg-bg flex flex-col pb-20">
       <main className="flex-1 px-4 py-6">
-        {isLoading && !cursor ? (
+        {isLoading ? (
           <div className="animate-pulse space-y-4">
             <div className="h-8 bg-bg-elevated rounded w-1/2" />
             <div className="grid grid-cols-2 gap-3">
@@ -62,8 +58,8 @@ export default function GenrePage() {
         ) : (
           <>
             <div className="mb-6">
-              <h1 className="text-2xl font-bold text-white">{data?.genre.name ?? slug}</h1>
-              <p className="text-text-secondary text-sm">{data?.genre.trackCount ?? 0} tracks</p>
+              <h1 className="text-2xl font-bold text-white">{genreMeta?.name ?? slug}</h1>
+              <p className="text-text-secondary text-sm">{genreMeta?.trackCount ?? 0} tracks</p>
             </div>
 
             {tracks.length === 0 ? (
@@ -84,13 +80,13 @@ export default function GenrePage() {
               </div>
             )}
 
-            {data?.nextCursor && (
+            {hasNextPage && (
               <div className="mt-6 flex justify-center">
                 <Button
                   variant="secondary"
-                  onClick={loadMore}
-                  loading={isFetching}
-                  disabled={isFetching}
+                  onClick={() => void fetchNextPage()}
+                  loading={isFetchingNextPage}
+                  disabled={isFetchingNextPage}
                 >
                   Load More
                 </Button>

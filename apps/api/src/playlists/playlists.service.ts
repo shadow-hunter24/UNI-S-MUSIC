@@ -29,6 +29,8 @@ export class PlaylistsService {
       where: { id },
       include: {
         tracks: {
+          // Only include tracks that are still PUBLISHED — taken-down tracks must not appear
+          where: { track: { status: 'PUBLISHED' } },
           orderBy: { position: 'asc' },
           include: {
             track: {
