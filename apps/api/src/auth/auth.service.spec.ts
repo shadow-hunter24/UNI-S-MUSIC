@@ -38,6 +38,7 @@ function buildPrisma(overrides: Record<string, unknown> = {}) {
     session: {
       findUnique: vi.fn(),
       create: vi.fn(),
+      update: vi.fn(),
       delete: vi.fn(),
       deleteMany: vi.fn(),
     },
@@ -170,16 +171,21 @@ describe('AuthService', () => {
       updatedAt: new Date(),
     };
 
-    it('success: creates session and returns accessToken', async () => {
+    it('success: creates session, sets cookie, and does NOT leak accessToken in body', async () => {
       const { service, prisma, users } = makeService();
       users.findByEmailOrUsername.mockResolvedValue(verifiedUser);
       vi.mocked(argon2.verify).mockResolvedValue(true as never);
       prisma.session.create.mockResolvedValue({ id: 'session-1' });
+      prisma.session.update.mockResolvedValue({});
       prisma.auditLog.create.mockResolvedValue({});
 
       const result = await service.login(dto, mockResponse);
 
-      expect(result).toHaveProperty('accessToken', 'signed_jwt_token');
+      // Cookie should be set
+      expect(mockResponse.cookie).toHaveBeenCalledWith('access_token', expect.any(String), expect.objectContaining({ httpOnly: true }));
+      // accessToken must NOT appear in the response body
+      expect(result).not.toHaveProperty('accessToken');
+      expect(result).toHaveProperty('user');
       expect(prisma.session.create).toHaveBeenCalledOnce();
     });
 
