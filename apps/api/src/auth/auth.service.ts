@@ -114,7 +114,10 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    if (!user.emailVerified) {
+    // In development, skip email verification so testing isn't blocked by the email stub.
+    // In production this gate is enforced.
+    const isDev = this.configService.get<string>('NODE_ENV') !== 'production';
+    if (!isDev && !user.emailVerified) {
       throw new UnauthorizedException('Email not verified. Please check your inbox.');
     }
 
