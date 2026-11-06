@@ -61,6 +61,8 @@ export interface TrackDto {
   genreId?: string;
   genreName?: string;
   status: TrackStatus;
+  processingError?: string;
+  streamUrl?: string;
   // NOTE: audioUrl is intentionally omitted — Phase 4 only
 }
 
@@ -128,4 +130,32 @@ export interface SearchResultDto {
   tracks: TrackDto[];
   artists: ArtistProfileDto[];
   genres: GenreDto[];
+}
+
+export interface UploadInitResponseDto {
+  trackId: string;
+  uploadUrl: string;
+  storageKey: string;
+  expiresAt: string; // ISO 8601
+}
+
+export interface UploadFinalizeResponseDto {
+  trackId: string;
+  status: TrackStatus;
+  durationSeconds?: number;
+}
+
+export interface PlayResponseDto {
+  played: boolean;
+  playCount: number;
+}
+
+export interface CoverUploadResponseDto {
+  coverImageUrl: string;
+}
+
+export interface AddCreditDto {
+  name: string;
+  role: string;
+  userId?: string;
 }

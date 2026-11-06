@@ -59,6 +59,7 @@ model User {
   follows       Follow[]       @relation("FollowFollower")
   auditLogs     AuditLog[]
   trackCredits  TrackCredit[]  @relation("TrackCredits")
+  playbackEvents PlaybackEvent[]
 }
 
 model UserProfile {
@@ -134,6 +135,8 @@ model Track {
   likeCount       Int           @default(0)
   coverImageUrl   String?
   audioUrl        String?
+  processingError String?
+  processedAt     DateTime?     @db.Timestamptz()
   createdAt       DateTime      @default(now()) @db.Timestamptz()
   updatedAt       DateTime      @updatedAt @db.Timestamptz()
 
@@ -145,6 +148,7 @@ model Track {
   uploadedBy      User?          @relation("ArtistTracks", fields: [uploadedById], references: [id])
   uploadedById    String?
   credits         TrackCredit[]
+  playbackEvents  PlaybackEvent[]
 }
 
 model TrackCredit {
@@ -157,6 +161,21 @@ model TrackCredit {
 
   track        Track    @relation(fields: [trackId], references: [id], onDelete: Cascade)
   creditedUser User?    @relation("TrackCredits", fields: [userId], references: [id], onDelete: SetNull)
+}
+
+model PlaybackEvent {
+  id           String   @id @default(uuid())
+  trackId      String
+  userId       String?
+  clientPlayId String   @unique
+  ipAddress    String?
+  userAgent    String?
+  createdAt    DateTime @default(now()) @db.Timestamptz()
+
+  track        Track    @relation(fields: [trackId], references: [id], onDelete: Cascade)
+  user         User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([trackId, createdAt])
 }
 
 model MediaAsset {

@@ -133,13 +133,14 @@ export class FeedService {
     });
 
     if (tracks.length < limit) {
-      const allTime = await this.prisma.track.findMany({
-        where: { status: 'PUBLISHED' },
+      const recentIds = tracks.map((t) => t.id);
+      const fillers = await this.prisma.track.findMany({
+        where: { status: 'PUBLISHED', id: { notIn: recentIds } },
         orderBy: { playCount: 'desc' },
-        take: limit,
+        take: limit - tracks.length,
         select: TRACK_SELECT,
       });
-      return allTime.map(mapTrack);
+      return [...tracks, ...fillers].map(mapTrack);
     }
 
     return tracks.map(mapTrack);

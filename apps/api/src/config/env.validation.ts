@@ -20,4 +20,26 @@ export const envValidationSchema = Joi.object({
   THROTTLE_TTL: Joi.number().default(60),
   THROTTLE_LIMIT: Joi.number().default(10),
   LOG_LEVEL: Joi.string().default('debug'),
+  S3_ENDPOINT: Joi.string().when('NODE_ENV', {
+    is: 'production',
+    then: Joi.required(),
+    otherwise: Joi.allow('').default(''),
+  }),
+  S3_REGION: Joi.string().default('auto'),
+  S3_BUCKET: Joi.string().when('NODE_ENV', {
+    is: 'production',
+    then: Joi.required(),
+    otherwise: Joi.allow('').default(''),
+  }),
+  S3_ACCESS_KEY_ID: Joi.string().when('NODE_ENV', {
+    is: 'production',
+    then: Joi.required(),
+    otherwise: Joi.allow('').default(''),
+  }),
+  S3_SECRET_ACCESS_KEY: Joi.string().when('NODE_ENV', {
+    is: 'production',
+    then: Joi.required(),
+    otherwise: Joi.allow('').default(''),
+  }),
+  MEDIA_PUBLIC_BASE_URL: Joi.string().uri().allow('').default(''),
 });

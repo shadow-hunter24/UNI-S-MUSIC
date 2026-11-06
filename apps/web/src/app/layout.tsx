@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { QueryProvider } from '@/providers/QueryProvider';
+import { PlayerProvider } from '@/providers/PlayerProvider';
+import { Player } from '@/components/music/Player';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
@@ -29,7 +31,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`dark ${inter.variable}`}>
       <body className="min-h-screen bg-bg text-white antialiased" style={{ background: '#0d0121' }}>
-        <QueryProvider>{children}</QueryProvider>
+        <QueryProvider>
+          <PlayerProvider>
+            {children}
+            <Player />
+          </PlayerProvider>
+        </QueryProvider>
       </body>
     </html>
   );

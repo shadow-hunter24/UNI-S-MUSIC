@@ -14,6 +14,8 @@ import { TracksModule } from './tracks/tracks.module';
 import { PlaylistsModule } from './playlists/playlists.module';
 import { FeedModule } from './feed/feed.module';
 import { SearchModule } from './search/search.module';
+import { StorageModule } from './storage/storage.module';
+import { QueueModule } from './queue/queue.module';
 
 @Module({
   imports: [
@@ -34,6 +36,8 @@ import { SearchModule } from './search/search.module';
       ],
     }),
     PrismaModule,
+    StorageModule,
+    QueueModule,
     HealthModule,
     AuthModule,
     UsersModule,

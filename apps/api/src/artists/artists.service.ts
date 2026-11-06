@@ -69,22 +69,22 @@ export class ArtistsService {
       throw new ConflictException('User already has an artist profile');
     }
 
-    const profile = await this.prisma.artistProfile.create({
-      data: {
-        userId,
-        stageName: dto.stageName,
-        bio: dto.bio,
-        verificationStatus: 'PENDING',
-      },
-    });
+    const [profile] = await this.prisma.$transaction([
+      this.prisma.artistProfile.create({
+        data: {
+          userId,
+          stageName: dto.stageName,
+          bio: dto.bio,
+          verificationStatus: 'PENDING',
+        },
+      }),
+      this.prisma.user.update({
+        where: { id: userId },
+        data: { role: 'ARTIST' },
+      }),
+    ]);
 
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: { role: 'ARTIST' },
-    });
-
-    return profile;
-  }
+    return profile;  }
 
   async findById(id: string) {
     const artist = await this.prisma.artistProfile.findUnique({
