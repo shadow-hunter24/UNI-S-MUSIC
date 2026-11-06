@@ -1,5 +1,12 @@
+import * as dotenv from 'dotenv';
+import * as path from 'path';
 import IORedis from 'ioredis';
 import { createAudioProcessingWorker } from './workers/audio-processing.worker';
+
+// Load the monorepo-root .env. The worker's CWD is apps/worker (no local .env),
+// so resolve from __dirname (apps/worker/src) up three levels to the root,
+// matching the API's ConfigModule envFilePath.
+dotenv.config({ path: path.resolve(__dirname, '..', '..', '..', '.env') });
 
 const REDIS_URL = process.env.REDIS_URL ?? 'redis://localhost:6379';
 
