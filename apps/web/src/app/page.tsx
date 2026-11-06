@@ -1,3 +1,6 @@
+'use client';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { Upload, DollarSign, Globe, Music2, Play } from 'lucide-react';
@@ -21,6 +24,15 @@ const TRENDING_PLACEHOLDERS = [
 ];
 
 export default function LandingPage() {
+  const router = useRouter();
+
+  useEffect(() => {
+    // First-time visitor: show onboarding before the landing page
+    if (typeof window !== 'undefined' && !localStorage.getItem('unis_onboarded')) {
+      router.replace('/onboarding');
+    }
+  }, [router]);
+
   return (
     <div className="min-h-screen flex flex-col" style={{ background: 'linear-gradient(180deg, #0d0121 0%, #130329 40%, #0d0121 100%)' }}>
 

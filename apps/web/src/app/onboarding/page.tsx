@@ -1,7 +1,14 @@
 'use client';
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Music2, Upload, DollarSign } from 'lucide-react';
+
+function markOnboarded() {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('unis_onboarded', '1');
+  }
+}
 
 const SLIDES = [
   {
@@ -26,15 +33,21 @@ const SLIDES = [
 
 export default function OnboardingPage() {
   const [slide, setSlide] = useState(0);
+  const router = useRouter();
   const isLast = slide === SLIDES.length - 1;
   const current = SLIDES[slide]!;
   const Icon = current.icon;
+
+  function finish() {
+    markOnboarded();
+    router.push('/auth/register');
+  }
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-between px-6 py-12" style={{ background: 'linear-gradient(180deg,#0d0121 0%,#130329 50%,#0d0121 100%)' }}>
       {/* Skip */}
       <div className="w-full flex justify-end">
-        <Link href="/auth/register" className="text-sm font-medium" style={{ color: 'rgba(196,181,212,0.6)' }}>Skip</Link>
+        <button onClick={finish} className="text-sm font-medium" style={{ color: 'rgba(196,181,212,0.6)' }}>Skip</button>
       </div>
 
       {/* Slide content */}
@@ -63,7 +76,7 @@ export default function OnboardingPage() {
         </div>
 
         {isLast
-          ? <Link href="/auth/register" className="block w-full py-3.5 rounded-xl font-bold text-sm text-white text-center" style={{ background: 'linear-gradient(135deg,#7c3aed,#a855f7)', boxShadow: '0 0 20px rgba(124,58,237,0.4)' }}>Get Started</Link>
+          ? <button onClick={finish} className="block w-full py-3.5 rounded-xl font-bold text-sm text-white text-center" style={{ background: 'linear-gradient(135deg,#7c3aed,#a855f7)', boxShadow: '0 0 20px rgba(124,58,237,0.4)' }}>Get Started</button>
           : <button onClick={() => setSlide((s) => s + 1)} className="w-full py-3.5 rounded-xl font-bold text-sm text-white" style={{ background: 'linear-gradient(135deg,#7c3aed,#a855f7)', boxShadow: '0 0 20px rgba(124,58,237,0.4)' }}>Next</button>
         }
       </div>
