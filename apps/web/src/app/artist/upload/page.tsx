@@ -17,7 +17,7 @@ import {
 } from '@/lib/hooks/useTracks';
 import type { GenreDto } from '@unis-music/contracts';
 
-const STEPS = ['Audio File', 'Song Details', 'Credits', 'Artwork', 'Publish'];
+const STEPS = ['Audio File', 'Song Details', 'Credits & Features', 'Artwork', 'Publish'];
 
 const AUDIO_MIME_TYPES = ['audio/mpeg', 'audio/mp3', 'audio/wav', 'audio/x-wav', 'audio/flac', 'audio/aac', 'audio/mp4', 'audio/x-m4a', 'audio/m4a'];
 const AUDIO_MAX_BYTES = 150 * 1024 * 1024;
@@ -428,13 +428,101 @@ export default function ArtistUploadPage() {
           </div>
         )}
 
-        {/* Step 2 — Credits */}
+        {/* Step 2 — Credits & Features */}
         {step === 2 && (
           <div className="space-y-4">
-            <StyledInput label="Featured Artists" placeholder="e.g. Artist name" value={featuredArtist} onChange={setFeaturedArtist} />
-            <StyledInput label="Producer(s)" placeholder="e.g. Producer name" value={producer} onChange={setProducer} />
-            <StyledInput label="Lyricist(s)" placeholder="e.g. Lyricist name" value={lyricist} onChange={setLyricist} />
-            <StyledInput label="Composer(s)" placeholder="e.g. Composer name" value={composer} onChange={setComposer} />
+            {/* Featured Artists */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-medium" style={{ color: 'rgba(196,181,212,0.8)' }}>Featured Artists</label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="e.g. Artist name"
+                  value={featuredArtist}
+                  onChange={(e) => setFeaturedArtist(e.target.value)}
+                  className="flex-1 rounded-xl px-4 py-3 text-sm text-white outline-none transition-all placeholder-purple-400/40"
+                  style={{ background: 'rgba(124,58,237,0.1)', border: '1px solid rgba(168,85,247,0.2)' }}
+                  onFocus={(e) => { e.target.style.borderColor = 'rgba(168,85,247,0.6)'; e.target.style.boxShadow = '0 0 0 3px rgba(124,58,237,0.15)'; }}
+                  onBlur={(e) => { e.target.style.borderColor = 'rgba(168,85,247,0.2)'; e.target.style.boxShadow = 'none'; }}
+                />
+                <button
+                  type="button"
+                  className="px-4 py-3 rounded-xl text-sm font-bold text-white shrink-0"
+                  style={{ background: 'linear-gradient(135deg,#7c3aed,#a855f7)' }}
+                >
+                  Add
+                </button>
+              </div>
+            </div>
+            {/* Producer */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-medium" style={{ color: 'rgba(196,181,212,0.8)' }}>Producer(s)</label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="e.g. Producer name"
+                  value={producer}
+                  onChange={(e) => setProducer(e.target.value)}
+                  className="flex-1 rounded-xl px-4 py-3 text-sm text-white outline-none transition-all placeholder-purple-400/40"
+                  style={{ background: 'rgba(124,58,237,0.1)', border: '1px solid rgba(168,85,247,0.2)' }}
+                  onFocus={(e) => { e.target.style.borderColor = 'rgba(168,85,247,0.6)'; e.target.style.boxShadow = '0 0 0 3px rgba(124,58,237,0.15)'; }}
+                  onBlur={(e) => { e.target.style.borderColor = 'rgba(168,85,247,0.2)'; e.target.style.boxShadow = 'none'; }}
+                />
+                <button
+                  type="button"
+                  className="px-4 py-3 rounded-xl text-sm font-bold text-white shrink-0"
+                  style={{ background: 'linear-gradient(135deg,#7c3aed,#a855f7)' }}
+                >
+                  Add
+                </button>
+              </div>
+            </div>
+            {/* Lyricist */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-medium" style={{ color: 'rgba(196,181,212,0.8)' }}>Lyricist(s)</label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="e.g. Lyricist name"
+                  value={lyricist}
+                  onChange={(e) => setLyricist(e.target.value)}
+                  className="flex-1 rounded-xl px-4 py-3 text-sm text-white outline-none transition-all placeholder-purple-400/40"
+                  style={{ background: 'rgba(124,58,237,0.1)', border: '1px solid rgba(168,85,247,0.2)' }}
+                  onFocus={(e) => { e.target.style.borderColor = 'rgba(168,85,247,0.6)'; e.target.style.boxShadow = '0 0 0 3px rgba(124,58,237,0.15)'; }}
+                  onBlur={(e) => { e.target.style.borderColor = 'rgba(168,85,247,0.2)'; e.target.style.boxShadow = 'none'; }}
+                />
+                <button
+                  type="button"
+                  className="px-4 py-3 rounded-xl text-sm font-bold text-white shrink-0"
+                  style={{ background: 'linear-gradient(135deg,#7c3aed,#a855f7)' }}
+                >
+                  Add
+                </button>
+              </div>
+            </div>
+            {/* Composer */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-xs font-medium" style={{ color: 'rgba(196,181,212,0.8)' }}>Composer(s)</label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="e.g. Composer name"
+                  value={composer}
+                  onChange={(e) => setComposer(e.target.value)}
+                  className="flex-1 rounded-xl px-4 py-3 text-sm text-white outline-none transition-all placeholder-purple-400/40"
+                  style={{ background: 'rgba(124,58,237,0.1)', border: '1px solid rgba(168,85,247,0.2)' }}
+                  onFocus={(e) => { e.target.style.borderColor = 'rgba(168,85,247,0.6)'; e.target.style.boxShadow = '0 0 0 3px rgba(124,58,237,0.15)'; }}
+                  onBlur={(e) => { e.target.style.borderColor = 'rgba(168,85,247,0.2)'; e.target.style.boxShadow = 'none'; }}
+                />
+                <button
+                  type="button"
+                  className="px-4 py-3 rounded-xl text-sm font-bold text-white shrink-0"
+                  style={{ background: 'linear-gradient(135deg,#7c3aed,#a855f7)' }}
+                >
+                  Add
+                </button>
+              </div>
+            </div>
           </div>
         )}
 
@@ -538,7 +626,7 @@ export default function ArtistUploadPage() {
             className="flex-1 py-3 rounded-xl font-bold text-sm"
             style={{ border: '1px solid rgba(168,85,247,0.4)', color: '#a855f7' }}
           >
-            Back
+            Prev
           </button>
         )}
 

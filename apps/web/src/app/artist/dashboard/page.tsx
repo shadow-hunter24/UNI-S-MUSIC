@@ -1,173 +1,204 @@
 'use client';
 import Link from 'next/link';
-import { Upload, Loader2, AlertCircle, CheckCircle, Clock, Music } from 'lucide-react';
-import { useMyTracks, useSubmitTrack } from '@/lib/hooks/useTracks';
-import { TrackStatus } from '@unis-music/contracts';
-import type { TrackDto } from '@unis-music/contracts';
+import {
+  Upload, Music, DollarSign, Users, TrendingUp,
+  Home, Settings, Megaphone, MessageCircle, Play,
+} from 'lucide-react';
 import { BottomNav } from '@/components/layout/BottomNav';
 
-const STATUS_COLOR: Record<TrackStatus, string> = {
-  [TrackStatus.UPLOADING]: 'bg-yellow-500/20 text-yellow-300',
-  [TrackStatus.PROCESSING]: 'bg-blue-500/20 text-blue-300',
-  [TrackStatus.PROCESSING_FAILED]: 'bg-red-500/20 text-red-300',
-  [TrackStatus.DRAFT]: 'bg-gray-500/20 text-gray-300',
-  [TrackStatus.PENDING_REVIEW]: 'bg-purple-500/20 text-purple-300',
-  [TrackStatus.PUBLISHED]: 'bg-green-500/20 text-green-300',
-  [TrackStatus.REJECTED]: 'bg-red-500/20 text-red-300',
-  [TrackStatus.SCHEDULED]: 'bg-blue-500/20 text-blue-300',
-  [TrackStatus.TAKEN_DOWN]: 'bg-orange-500/20 text-orange-300',
-  [TrackStatus.ARCHIVED]: 'bg-gray-500/20 text-gray-300',
-};
+const STATS = [
+  { label: 'Total Streams', value: '125,482', icon: TrendingUp, color: '#a855f7' },
+  { label: 'Monthly', value: '48,210', icon: Play, color: '#ec4899' },
+  { label: 'Followers', value: '12.4K', icon: Users, color: '#7c3aed' },
+  { label: 'Earnings', value: '$248.32', icon: DollarSign, color: '#22c55e' },
+];
 
-function formatDuration(seconds?: number): string {
-  if (!seconds) return '--';
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  return `${m}:${s.toString().padStart(2, '0')}`;
-}
+const TOP_TRACKS = [
+  { rank: 1, title: 'City Boys', plays: '24,102', earnings: '$48.20' },
+  { rank: 2, title: 'Afro Nation', plays: '18,540', earnings: '$37.08' },
+  { rank: 3, title: 'Essence Remix', plays: '15,200', earnings: '$30.40' },
+  { rank: 4, title: 'Night Vibes', plays: '12,890', earnings: '$25.78' },
+  { rank: 5, title: 'Golden Hour', plays: '10,450', earnings: '$20.90' },
+];
 
-function TrackStatusBadge({ status }: { status: string }) {
-  const colorClass = STATUS_COLOR[status as TrackStatus] ?? 'bg-gray-500/20 text-gray-300';
-  return (
-    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${colorClass}`}>
-      {status.replace(/_/g, ' ')}
-    </span>
-  );
-}
+const RECENT_ACTIVITY = [
+  { action: 'New follower', detail: 'BrightBeat started following you', time: '2m ago' },
+  { action: 'Track liked', detail: '"City Boys" was liked 120 times today', time: '1h ago' },
+  { action: 'Payout', detail: '$48.20 payout processed', time: '3h ago' },
+  { action: 'New comment', detail: 'KingDee commented on "Afro Nation"', time: '5h ago' },
+];
 
-function TrackRow({ track }: { track: TrackDto }) {
-  const submit = useSubmitTrack();
-  const canSubmit =
-    track.status === TrackStatus.DRAFT &&
-    track.durationSeconds != null &&
-    track.durationSeconds > 0;
-
-  return (
-    <div
-      className="flex items-center gap-3 p-3 rounded-xl transition-all"
-      style={{ background: 'rgba(124,58,237,0.06)', border: '1px solid rgba(168,85,247,0.12)' }}
-    >
-      {/* Cover placeholder */}
-      <div
-        className="shrink-0 w-10 h-10 rounded-lg flex items-center justify-center"
-        style={{ background: 'linear-gradient(135deg,rgba(124,58,237,0.3),rgba(168,85,247,0.15))' }}
-        aria-hidden="true"
-      >
-        <Music size={14} className="text-purple-400/60" />
-      </div>
-
-      {/* Info */}
-      <div className="flex-1 min-w-0">
-        <p className="text-white text-sm font-semibold truncate">{track.title}</p>
-        <div className="flex items-center gap-2 mt-0.5 flex-wrap">
-          <TrackStatusBadge status={track.status} />
-          {track.durationSeconds && (
-            <span className="text-purple-300/50 text-xs">{formatDuration(track.durationSeconds)}</span>
-          )}
-          <span className="text-purple-300/50 text-xs">{track.playCount} plays</span>
-        </div>
-        {track.processingError && (
-          <p className="text-red-400/80 text-xs mt-1 truncate">{track.processingError}</p>
-        )}
-      </div>
-
-      {/* Actions */}
-      <div className="shrink-0 flex items-center gap-2">
-        {track.status === TrackStatus.PROCESSING && (
-          <Loader2 size={16} className="text-blue-300 animate-spin" aria-label="Processing" />
-        )}
-        {track.status === TrackStatus.PROCESSING_FAILED && (
-          <Link
-            href="/artist/upload"
-            className="text-xs text-red-400 hover:text-red-300 flex items-center gap-1"
-            aria-label="Retry upload"
-          >
-            <AlertCircle size={12} aria-hidden="true" />
-            Retry
-          </Link>
-        )}
-        {track.status === TrackStatus.PUBLISHED && (
-          <Link
-            href={`/tracks/${track.id}`}
-            className="text-xs text-green-400 hover:text-green-300 flex items-center gap-1"
-          >
-            <CheckCircle size={12} aria-hidden="true" />
-            View
-          </Link>
-        )}
-        {track.status === TrackStatus.PENDING_REVIEW && (
-          <span className="text-xs text-purple-300/60 flex items-center gap-1">
-            <Clock size={12} aria-hidden="true" />
-            In review
-          </span>
-        )}
-        {canSubmit && (
-          <button
-            onClick={() => submit.mutate(track.id)}
-            disabled={submit.isPending}
-            aria-label={`Submit ${track.title} for review`}
-            className="text-xs px-2 py-1 rounded-lg font-medium disabled:opacity-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-purple-400"
-            style={{ background: 'linear-gradient(135deg,#7c3aed,#a855f7)', color: 'white' }}
-          >
-            {submit.isPending ? 'Submitting…' : 'Submit'}
-          </button>
-        )}
-      </div>
-    </div>
-  );
-}
+const SIDEBAR_NAV = [
+  { href: '/home', label: 'Home', icon: Home },
+  { href: '/artist/upload', label: 'My Music', icon: Music },
+  { href: '/earn', label: 'Earnings', icon: DollarSign },
+  { href: '/earn/payouts', label: 'Payouts', icon: TrendingUp },
+  { href: '/earn', label: 'Promotions', icon: Megaphone },
+  { href: '/connect', label: 'Messages', icon: MessageCircle },
+  { href: '/profile', label: 'Settings', icon: Settings },
+];
 
 export default function ArtistDashboard() {
-  const { data, isLoading } = useMyTracks();
-
-  const tracks = data?.items ?? [];
-
   return (
-    <div className="min-h-screen flex flex-col pb-24" style={{ background: 'linear-gradient(180deg,#0d0121 0%,#130329 50%,#0d0121 100%)' }}>
-      {/* Header */}
-      <header
-        className="flex items-center justify-between px-4 py-4"
-        style={{ background: 'rgba(13,1,33,0.85)', backdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(168,85,247,0.15)' }}
+    <div
+      className="min-h-screen flex pb-20"
+      style={{ background: 'linear-gradient(180deg,#0d0121 0%,#130329 50%,#0d0121 100%)' }}
+    >
+      {/* Left sidebar — desktop only */}
+      <aside
+        className="hidden md:flex flex-col w-56 shrink-0 py-6 px-3"
+        style={{ background: 'rgba(13,1,33,0.85)', borderRight: '1px solid rgba(168,85,247,0.15)', minHeight: '100vh' }}
       >
-        <h1 className="text-lg font-bold text-white">My Tracks</h1>
-        <Link
-          href="/artist/upload"
-          className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-semibold text-white"
-          style={{ background: 'linear-gradient(135deg,#7c3aed,#a855f7)', boxShadow: '0 0 12px rgba(124,58,237,0.4)' }}
+        {/* Logo */}
+        <div className="flex items-center gap-2 px-3 mb-8">
+          <div
+            className="w-7 h-7 rounded-lg flex items-center justify-center"
+            style={{ background: 'linear-gradient(135deg,#7c3aed,#a855f7)' }}
+          >
+            <span className="text-white font-black text-xs">U</span>
+          </div>
+          <span
+            className="font-black text-base"
+            style={{ background: 'linear-gradient(135deg,#e879f9,#a855f7)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}
+          >
+            Uni&apos;s Music
+          </span>
+        </div>
+
+        {/* Nav links */}
+        <nav aria-label="Artist navigation">
+          <ul className="space-y-1" role="list">
+            {SIDEBAR_NAV.map(({ href, label, icon: Icon }) => (
+              <li key={label}>
+                <Link
+                  href={href}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all hover:bg-purple-600/10"
+                  style={{ color: 'rgba(196,181,212,0.7)' }}
+                >
+                  <Icon size={16} aria-hidden="true" />
+                  {label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+      </aside>
+
+      {/* Main content */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Header */}
+        <header
+          className="flex items-center justify-between px-4 py-4"
+          style={{ background: 'rgba(13,1,33,0.85)', backdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(168,85,247,0.15)' }}
         >
-          <Upload size={14} aria-hidden="true" />
-          Upload
-        </Link>
-      </header>
-
-      <main className="flex-1 px-4 py-4 space-y-3">
-        {isLoading && (
-          <div className="flex items-center justify-center py-16">
-            <Loader2 size={32} className="text-purple-400 animate-spin" aria-label="Loading tracks" />
+          <div>
+            <h1 className="text-lg font-bold text-white">Artist Dashboard</h1>
+            <p className="text-xs" style={{ color: 'rgba(196,181,212,0.5)' }}>Welcome back, BrightKing</p>
           </div>
-        )}
+          <Link
+            href="/artist/upload"
+            className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-semibold text-white"
+            style={{ background: 'linear-gradient(135deg,#7c3aed,#a855f7)', boxShadow: '0 0 12px rgba(124,58,237,0.4)' }}
+          >
+            <Upload size={14} aria-hidden="true" />
+            Upload
+          </Link>
+        </header>
 
-        {!isLoading && tracks.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-16 gap-4">
-            <Music size={48} className="text-purple-400/30" aria-hidden="true" />
-            <p className="text-white font-semibold">No tracks yet</p>
-            <p className="text-purple-300/50 text-sm text-center">
-              Upload your first track to get started.
-            </p>
-            <Link
-              href="/artist/upload"
-              className="px-4 py-2 rounded-xl text-sm font-semibold text-white"
-              style={{ background: 'linear-gradient(135deg,#7c3aed,#a855f7)' }}
+        <main className="flex-1 px-4 py-5 space-y-6">
+
+          {/* Stats row */}
+          <div className="grid grid-cols-2 gap-3">
+            {STATS.map(({ label, value, icon: Icon, color }) => (
+              <div
+                key={label}
+                className="rounded-xl p-4"
+                style={{
+                  background: 'linear-gradient(135deg,rgba(42,13,74,0.7),rgba(26,5,51,0.85))',
+                  border: '1px solid rgba(168,85,247,0.2)',
+                }}
+              >
+                <div
+                  className="w-8 h-8 rounded-lg flex items-center justify-center mb-2"
+                  style={{ background: `${color}22` }}
+                >
+                  <Icon size={16} style={{ color }} aria-hidden="true" />
+                </div>
+                <p className="text-white font-black text-lg leading-none mb-1">{value}</p>
+                <p className="text-xs" style={{ color: 'rgba(196,181,212,0.6)' }}>{label}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* Top Tracks table */}
+          <div>
+            <h2 className="text-white font-bold text-sm mb-3">Top Tracks</h2>
+            <div
+              className="rounded-2xl overflow-hidden"
+              style={{ background: 'linear-gradient(135deg,rgba(42,13,74,0.7),rgba(26,5,51,0.85))', border: '1px solid rgba(168,85,247,0.2)' }}
             >
-              Upload a Track
-            </Link>
+              {/* Table header */}
+              <div
+                className="grid grid-cols-4 px-4 py-2.5 text-xs font-semibold"
+                style={{ color: 'rgba(196,181,212,0.5)', borderBottom: '1px solid rgba(168,85,247,0.1)' }}
+              >
+                <span>#</span>
+                <span className="col-span-2">Title</span>
+                <span className="text-right">Plays / Earnings</span>
+              </div>
+              {/* Rows */}
+              {TOP_TRACKS.map((track) => (
+                <div
+                  key={track.rank}
+                  className="grid grid-cols-4 items-center px-4 py-3 transition-all hover:bg-purple-600/5"
+                  style={{ borderBottom: '1px solid rgba(168,85,247,0.06)' }}
+                >
+                  <span className="text-xs font-bold" style={{ color: 'rgba(196,181,212,0.4)' }}>{track.rank}</span>
+                  <div className="col-span-2 flex items-center gap-2 min-w-0">
+                    <div
+                      className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                      style={{ background: 'linear-gradient(135deg,rgba(124,58,237,0.3),rgba(168,85,247,0.15))' }}
+                    >
+                      <Music size={12} className="text-purple-400/60" aria-hidden="true" />
+                    </div>
+                    <span className="text-white text-sm font-semibold truncate">{track.title}</span>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-white text-xs font-semibold">{track.plays}</p>
+                    <p className="text-xs" style={{ color: '#22c55e' }}>{track.earnings}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
-        )}
 
-        {tracks.map((track) => (
-          <TrackRow key={track.id} track={track} />
-        ))}
-      </main>
+          {/* Recent Activity */}
+          <div>
+            <h2 className="text-white font-bold text-sm mb-3">Recent Activity</h2>
+            <div className="space-y-2">
+              {RECENT_ACTIVITY.map((item) => (
+                <div
+                  key={item.action + item.time}
+                  className="flex items-start gap-3 p-3 rounded-xl"
+                  style={{ background: 'rgba(124,58,237,0.08)', border: '1px solid rgba(168,85,247,0.12)' }}
+                >
+                  <div
+                    className="w-2 h-2 rounded-full mt-1.5 shrink-0"
+                    style={{ background: '#a855f7' }}
+                    aria-hidden="true"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white text-sm font-semibold">{item.action}</p>
+                    <p className="text-xs" style={{ color: 'rgba(196,181,212,0.6)' }}>{item.detail}</p>
+                  </div>
+                  <span className="text-xs shrink-0" style={{ color: 'rgba(196,181,212,0.4)' }}>{item.time}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+        </main>
+      </div>
 
       <BottomNav />
     </div>
