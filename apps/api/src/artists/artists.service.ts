@@ -5,15 +5,35 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { StorageService } from '../storage/storage.service';
 import { ApplyArtistDto } from './dto/apply-artist.dto';
 import { UpdateArtistDto } from './dto/update-artist.dto';
 import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class ArtistsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly storageService: StorageService,
+  ) {}
 
-  private mapTrack(t: {
+  private trackSelect = {
+    id: true,
+    title: true,
+    slug: true,
+    artistProfileId: true,
+    coverImageUrl: true,
+    durationSeconds: true,
+    playCount: true,
+    likeCount: true,
+    explicit: true,
+    releaseDate: true,
+    genreId: true,
+    status: true,
+    artistProfile: { select: { stageName: true } },
+  } as const;
+
+  private async mapTrack(t: {
     id: string;
     title: string;
     slug: string;
@@ -34,7 +54,7 @@ export class ArtistsService {
       slug: t.slug,
       artistId: t.artistProfileId,
       artistName: t.artistProfile.stageName,
-      coverImageUrl: t.coverImageUrl ?? undefined,
+      coverImageUrl: await this.storageService.resolveCoverUrl(t.coverImageUrl),
       durationSeconds: t.durationSeconds ?? undefined,
       playCount: Number(t.playCount),
       likeCount: t.likeCount,
@@ -44,22 +64,6 @@ export class ArtistsService {
       status: t.status,
     };
   }
-
-  private trackSelect = {
-    id: true,
-    title: true,
-    slug: true,
-    artistProfileId: true,
-    coverImageUrl: true,
-    durationSeconds: true,
-    playCount: true,
-    likeCount: true,
-    explicit: true,
-    releaseDate: true,
-    genreId: true,
-    status: true,
-    artistProfile: { select: { stageName: true } },
-  } as const;
 
   async apply(userId: string, dto: ApplyArtistDto) {
     const existing = await this.prisma.artistProfile.findUnique({
@@ -118,8 +122,8 @@ export class ArtistsService {
       totalTracks: artist.totalTracks,
       isVerified: artist.isVerified,
       verificationStatus: artist.verificationStatus,
-      recentTracks: recentTracks.map((t) => this.mapTrack(t)),
-      topTracks: topTracks.map((t) => this.mapTrack(t)),
+      recentTracks: await Promise.all(recentTracks.map((t) => this.mapTrack(t))),
+      topTracks: await Promise.all(topTracks.map((t) => this.mapTrack(t))),
     };
   }
 

@@ -58,6 +58,19 @@ export class TracksController {
     return this.tracksService.getMyTracks(user.sub, cursor, limit ? parseInt(limit, 10) : undefined);
   }
 
+  // 2b. GET /tracks/me/:id — get a single own track by id (any status)
+  @Get('me/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ARTIST, UserRole.MODERATOR, UserRole.ADMIN)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: "Get current artist's own track by ID (any status)" })
+  getMyTrackById(
+    @CurrentUser() user: { sub: string },
+    @Param('id') trackId: string,
+  ) {
+    return this.tracksService.getMyTrackById(user.sub, trackId);
+  }
+
   // 3. POST /tracks — create + init upload
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -78,7 +91,8 @@ export class TracksController {
 
   // 5. PATCH /tracks/:id — update metadata
   @Patch(':id')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ARTIST)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Update track metadata (owner only, DRAFT/PENDING_REVIEW)' })
   updateTrack(
@@ -91,7 +105,8 @@ export class TracksController {
 
   // 6. POST /tracks/:id/cover — multipart cover upload
   @Post(':id/cover')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ARTIST)
   @ApiBearerAuth()
   @UseInterceptors(FileInterceptor('file'))
   @ApiOperation({ summary: 'Upload cover art (server-proxied multipart)' })
@@ -106,7 +121,8 @@ export class TracksController {
 
   // 7. POST /tracks/:id/finalize — finalize after S3 PUT
   @Post(':id/finalize')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ARTIST)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Finalize upload after direct-to-S3 PUT completes' })
   @HttpCode(HttpStatus.OK)
@@ -116,7 +132,8 @@ export class TracksController {
 
   // 8. POST /tracks/:id/credits — add credit
   @Post(':id/credits')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ARTIST)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Add a credit to a track (owner only)' })
   @HttpCode(HttpStatus.CREATED)
@@ -130,7 +147,8 @@ export class TracksController {
 
   // 9. POST /tracks/:id/submit — artist submits for review
   @Post(':id/submit')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ARTIST)
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Submit a DRAFT track for moderator review' })
   @HttpCode(HttpStatus.OK)

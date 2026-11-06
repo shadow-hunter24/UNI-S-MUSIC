@@ -83,6 +83,16 @@ export function useTrack(id: string) {
   });
 }
 
+// Owner-authenticated track by ID — returns any status (used during upload flow)
+export function useMyTrackById(id: string, refetchInterval?: number | false) {
+  return useQuery<TrackDto>({
+    queryKey: ['track', 'me', id],
+    queryFn: () => apiFetch<TrackDto>(`/api/v1/tracks/me/${id}`),
+    enabled: !!id,
+    refetchInterval: refetchInterval ?? false,
+  });
+}
+
 // Artist's own tracks (all statuses)
 export function useMyTracks() {
   return useQuery({

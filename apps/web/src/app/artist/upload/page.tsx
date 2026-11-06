@@ -13,7 +13,7 @@ import {
   useUploadCover,
   useAddCredit,
   useSubmitTrack,
-  useTrack,
+  useMyTrackById,
 } from '@/lib/hooks/useTracks';
 import type { GenreDto } from '@unis-music/contracts';
 
@@ -107,8 +107,8 @@ export default function ArtistUploadPage() {
   const addCredit = useAddCredit();
   const submitTrack = useSubmitTrack();
 
-  // Poll track status while in step 5
-  const { data: polledTrack } = useTrack(trackId ?? '', );
+  // Poll track status while in step 5 — only active when we have a trackId and are on the final step
+  const { data: polledTrack } = useMyTrackById(trackId ?? '', step === 4 ? 3000 : false);
 
   const stepIcons = [Music, FileText, Send, Image, Upload];
 

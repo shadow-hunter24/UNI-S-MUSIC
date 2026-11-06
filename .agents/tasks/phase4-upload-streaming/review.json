@@ -1,0 +1,11 @@
+{
+  "verdict": "CHANGES_REQUESTED",
+  "findings": [
+    "Missing RolesGuard on artist mutations — PATCH /:id, POST /:id/cover, POST /:id/finalize, POST /:id/credits, and POST /:id/submit use only JwtAuthGuard. Add RolesGuard and @Roles(UserRole.ARTIST) to each to match the design contract and prevent non-ARTISTs from reaching assertOwnsTrack.",
+    "Stale coverImageUrl in FeedService and ArtistsService — Both services' inline mapTrack return raw R2 keys for coverImageUrl instead of presigned URLs. Inject StorageService into both and call resolveCoverUrl, or extract the shared TrackMapper the design doc planned.",
+    "Upload page step 5 does not poll — useTrack(trackId) is called without refetchInterval, so the PROCESSING spinner never resolves automatically. Additionally, useTrack calls GET /tracks/:id which only returns PUBLISHED tracks, so a DRAFT track always 404s when polled from the upload page.",
+    "Cover upload endpoint missing role guard — POST /:id/cover accepts any authenticated user (multipart file upload path). Add @Roles(UserRole.ARTIST) with RolesGuard.",
+    "Presigned PUT MIME enforcement is advisory only — head.contentType at finalize is not validated against AUDIO_MIME_TYPES before enqueueing the job or storing on MediaAsset. Add a MIME check in finalizeUpload after headObject returns."
+  ],
+  "reviewDoc": "c:\\Users\\AHMED MANUEL BOATENG\\Downloads\\UNIS MUSIC\\.agents\\tasks\\phase4-upload-streaming\\code-review.md"
+}

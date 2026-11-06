@@ -43,11 +43,19 @@ function buildPrisma(overrides: Record<string, unknown> = {}) {
   };
 }
 
-function makeService(prismaOverrides = {}) {
+function buildStorage(overrides: Record<string, unknown> = {}) {
+  return {
+    resolveCoverUrl: vi.fn().mockResolvedValue(undefined),
+    ...overrides,
+  };
+}
+
+function makeService(prismaOverrides = {}, storageOverrides = {}) {
   const prisma = buildPrisma(prismaOverrides);
+  const storage = buildStorage(storageOverrides);
   // @ts-expect-error - injecting mocks
-  const service = new ArtistsService(prisma);
-  return { service, prisma };
+  const service = new ArtistsService(prisma, storage);
+  return { service, prisma, storage };
 }
 
 describe('ArtistsService', () => {

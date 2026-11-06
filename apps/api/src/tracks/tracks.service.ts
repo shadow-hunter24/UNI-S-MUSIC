@@ -8,7 +8,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
-import { StorageService, COVER_MIME_TYPES, AUDIO_MAX_BYTES, COVER_MAX_BYTES } from '../storage/storage.service';
+import { StorageService, AUDIO_MIME_TYPES, COVER_MIME_TYPES, AUDIO_MAX_BYTES, COVER_MAX_BYTES } from '../storage/storage.service';
 import { AudioQueueService } from '../queue/audio-queue.service';
 import { TracksQueryDto } from './dto/tracks-query.dto';
 import { CreateTrackDto } from './dto/create-track.dto';
@@ -277,6 +277,13 @@ export class TracksService {
       throw new BadRequestException('Audio file exceeds 150 MB limit');
     }
 
+    // Validate MIME type from storage — R2 may record what the client sent;
+    // reject anything that is not a whitelisted audio type.
+    const normalizedMime = head.contentType.split(';')[0]?.trim() ?? '';
+    if (!AUDIO_MIME_TYPES.includes(normalizedMime) && !normalizedMime.startsWith('audio/')) {
+      throw new BadRequestException(`Invalid audio MIME type: ${head.contentType}`);
+    }
+
     await this.prisma.$transaction([
       this.prisma.mediaAsset.create({
         data: {
@@ -440,6 +447,30 @@ export class TracksService {
       items: await Promise.all(items.map((t) => this.mapTrack(t))),
       nextCursor,
     };
+  }
+
+  async getMyTrackById(userId: string, trackId: string) {
+    const track = await this.prisma.track.findUnique({
+      where: { id: trackId },
+      select: {
+        ...TRACK_SELECT,
+        artistProfile: { select: { stageName: true, userId: true } },
+        credits: {
+          select: { id: true, role: true, name: true, userId: true },
+        },
+      },
+    });
+
+    if (!track) throw new NotFoundException('Track not found');
+
+    // Verify the requesting user owns this track
+    if (track.artistProfile.userId !== userId) {
+      throw new ForbiddenException('Not your track');
+    }
+
+    // mapTrack only needs stageName from artistProfile; pass a compatible shape
+    const mapped = await this.mapTrack({ ...track, artistProfile: { stageName: track.artistProfile.stageName } });
+    return { ...mapped, credits: track.credits };
   }
 
   async streamTrack(trackId: string) {

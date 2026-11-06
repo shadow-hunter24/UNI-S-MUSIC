@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { StorageService } from '../storage/storage.service';
 
 const TRACK_SELECT = {
   id: true,
@@ -18,7 +19,7 @@ const TRACK_SELECT = {
   genre: { select: { name: true } },
 } as const;
 
-function mapTrack(t: {
+type TrackRow = {
   id: string;
   title: string;
   slug: string;
@@ -33,29 +34,33 @@ function mapTrack(t: {
   status: string;
   artistProfile: { stageName: string };
   genre: { name: string } | null;
-}) {
-  return {
-    id: t.id,
-    title: t.title,
-    slug: t.slug,
-    artistId: t.artistProfileId,
-    artistName: t.artistProfile.stageName,
-    coverImageUrl: t.coverImageUrl ?? undefined,
-    durationSeconds: t.durationSeconds ?? undefined,
-    playCount: Number(t.playCount),
-    likeCount: t.likeCount,
-    explicit: t.explicit,
-    releaseDate: t.releaseDate?.toISOString() ?? undefined,
-    genreId: t.genreId ?? undefined,
-    genreName: t.genre?.name ?? undefined,
-    status: t.status,
-  };
-}
+};
 
 @Injectable()
 export class FeedService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly storageService: StorageService,
+  ) {}
 
+  private async mapTrack(t: TrackRow) {
+    return {
+      id: t.id,
+      title: t.title,
+      slug: t.slug,
+      artistId: t.artistProfileId,
+      artistName: t.artistProfile.stageName,
+      coverImageUrl: await this.storageService.resolveCoverUrl(t.coverImageUrl),
+      durationSeconds: t.durationSeconds ?? undefined,
+      playCount: Number(t.playCount),
+      likeCount: t.likeCount,
+      explicit: t.explicit,
+      releaseDate: t.releaseDate?.toISOString() ?? undefined,
+      genreId: t.genreId ?? undefined,
+      genreName: t.genre?.name ?? undefined,
+      status: t.status,
+    };
+  }
   async getFeed(userId?: string) {
     const [trendingRaw, newReleasesRaw, genres] = await Promise.all([
       this.prisma.track.findMany({
@@ -83,12 +88,12 @@ export class FeedService {
         });
         return {
           genre: { id: g.id, name: g.name, slug: g.slug, imageUrl: g.imageUrl ?? undefined },
-          tracks: tracks.map(mapTrack),
+          tracks: await Promise.all(tracks.map((t) => this.mapTrack(t))),
         };
       }),
     );
 
-    let fromFollowing: ReturnType<typeof mapTrack>[] | undefined;
+    let fromFollowing: Awaited<ReturnType<typeof this.mapTrack>>[] | undefined;
     if (userId) {
       const follows = await this.prisma.follow.findMany({
         where: { followerId: userId },
@@ -106,13 +111,13 @@ export class FeedService {
           take: 10,
           select: TRACK_SELECT,
         });
-        fromFollowing = followingTracks.map(mapTrack);
+        fromFollowing = await Promise.all(followingTracks.map((t) => this.mapTrack(t)));
       }
     }
 
     return {
-      trending: trendingRaw.map(mapTrack),
-      newReleases: newReleasesRaw.map(mapTrack),
+      trending: await Promise.all(trendingRaw.map((t) => this.mapTrack(t))),
+      newReleases: await Promise.all(newReleasesRaw.map((t) => this.mapTrack(t))),
       byGenre: byGenre.filter((g) => g.tracks.length > 0),
       fromFollowing,
     };
@@ -140,10 +145,10 @@ export class FeedService {
         take: limit - tracks.length,
         select: TRACK_SELECT,
       });
-      return [...tracks, ...fillers].map(mapTrack);
+      return Promise.all([...tracks, ...fillers].map((t) => this.mapTrack(t)));
     }
 
-    return tracks.map(mapTrack);
+    return Promise.all(tracks.map((t) => this.mapTrack(t)));
   }
 
   async getNewReleases(limit = 20) {
@@ -153,6 +158,6 @@ export class FeedService {
       take: limit,
       select: TRACK_SELECT,
     });
-    return tracks.map(mapTrack);
+    return Promise.all(tracks.map((t) => this.mapTrack(t)));
   }
 }

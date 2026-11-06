@@ -1,0 +1,27 @@
+{
+  "verdict": "APPROVED",
+  "findings": [
+    {
+      "severity": "LOW",
+      "issue": "HeadObject returns the client-declared Content-Type, not the file's actual bytes; 'authoritatively validated' wording overstates the finalize check. Real content validation is the worker's music-metadata probe.",
+      "location": "design 'Invariants & ownership' + 'Field semantics (MediaAsset.mimeType)'"
+    },
+    {
+      "severity": "LOW",
+      "issue": "StorageService failure-timing prose is self-contradictory ('throws at construction time' vs 'fails fast on first use'). Constructor should not throw on missing env to avoid crashing the whole API on boot in dev.",
+      "location": "design 'env additions' note + StorageService code block"
+    },
+    {
+      "severity": "LOW",
+      "issue": "music-metadata parseWebStream requires converting the AWS SDK Node Readable to a Web ReadableStream (Body.transformToWebStream()); passing the Node stream directly won't work. Use parseBuffer or transformToWebStream().",
+      "location": "design 'Worker design' / AudioProbePort real implementation"
+    },
+    {
+      "severity": "LOW",
+      "issue": "Play recording runs as a blocking $transaction before the signed URL is returned; a transient DB error returns 500 and prevents playback. Consider making the PlaybackEvent write non-blocking (fire-and-forget or a separate job).",
+      "location": "design 'Streaming endpoint' / TracksService.getStreamUrl"
+    }
+  ],
+  "note": "MEDIUM finding from iteration 2 (upload/cover endpoints lacking status guards) was addressed in design iteration 3: requestUploadUrl/finalizeUpload are now guarded to DRAFT/UPLOADING/PROCESSING_FAILED only; requestCoverUrl allows DRAFT and PUBLISHED (cover-only update). All remaining findings are LOW — non-blocking implementation notes for the coder. Design approved to unblock the build phase.",
+  "reviewDoc": "c:/Users/AHMED MANUEL BOATENG/Downloads/UNIS MUSIC/.agents/tasks/phase4-upload-streaming/design-review.md"
+}
