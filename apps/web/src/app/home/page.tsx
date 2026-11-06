@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import Image from 'next/image';
 import { Bell, Search, User } from 'lucide-react';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { TrackCard } from '@/components/music/TrackCard';
@@ -49,6 +50,23 @@ export default function HomePage() {
           <Search size={16} className="text-purple-400/60" aria-hidden="true" />
           <span className="text-sm text-purple-400/50">Search artists, songs, albums…</span>
         </Link>
+
+        {/* Featured hero banner */}
+        <div className="relative w-full rounded-2xl overflow-hidden" style={{ height: 200 }}>
+          <Image
+            src="https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&q=80"
+            alt="Featured track"
+            fill
+            className="object-cover"
+            sizes="(max-width:640px) 100vw, 640px"
+          />
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(90deg, rgba(13,1,33,0.85) 0%, rgba(13,1,33,0.3) 60%, transparent 100%)' }} />
+          <div className="absolute inset-0 p-5 flex flex-col justify-end">
+            <span className="text-xs font-semibold text-purple-300 uppercase tracking-widest mb-1">Trending Now</span>
+            <h2 className="text-xl font-black text-white mb-1" style={{ textShadow: '0 2px 8px rgba(0,0,0,0.6)' }}>Play Now</h2>
+            <p className="text-sm text-purple-200/80">Discover today&apos;s hottest tracks</p>
+          </div>
+        </div>
 
         {/* Trending Now */}
         <section aria-label="Trending Now">
