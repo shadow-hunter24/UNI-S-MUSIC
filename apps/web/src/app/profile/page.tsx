@@ -2,11 +2,12 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Settings, Music2, Heart, ListMusic, UserCheck, Edit2, LogOut, User } from 'lucide-react';
+import { Settings, Music2, Heart, ListMusic, UserCheck, Edit2, LogOut, User, ShieldCheck, Mic2 } from 'lucide-react';
 import { BottomNav } from '@/components/layout/BottomNav';
 import { MiniPlayer } from '@/components/music/MiniPlayer';
 import { useCurrentUser } from '@/lib/hooks/useCurrentUser';
 import { useMyTracks } from '@/lib/hooks/useTracks';
+import { useArtistMe } from '@/lib/hooks/useArtist';
 
 type Tab = 'tracks' | 'playlists';
 
@@ -18,6 +19,7 @@ export default function ProfilePage() {
   const [tab, setTab] = useState<Tab>('tracks');
   const { data: user, isLoading: userLoading } = useCurrentUser();
   const { data: tracksData, isLoading: tracksLoading } = useMyTracks();
+  const { data: artistProfile } = useArtistMe();
 
   const tracks = tracksData?.items ?? [];
   const initials = user
@@ -104,10 +106,25 @@ export default function ProfilePage() {
               style={{ background: 'linear-gradient(135deg,#7c3aed,#a855f7)', boxShadow: '0 0 15px rgba(124,58,237,0.3)' }}>
               <Edit2 size={14} /> Edit Profile
             </Link>
-            <Link href="/artist/verification" className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold text-purple-300 hover:text-white transition-colors"
-              style={{ background: 'rgba(124,58,237,0.12)', border: '1px solid rgba(168,85,247,0.25)' }}>
-              <UserCheck size={14} /> Get Verified
-            </Link>
+            {/* Role-based CTA */}
+            {!userLoading && user?.role !== 'ARTIST' && (
+              <Link href="/artist/apply" className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold text-purple-300 hover:text-white transition-colors"
+                style={{ background: 'rgba(124,58,237,0.12)', border: '1px solid rgba(168,85,247,0.25)' }}>
+                <Mic2 size={14} /> Become an Artist
+              </Link>
+            )}
+            {!userLoading && user?.role === 'ARTIST' && !artistProfile?.isVerified && (
+              <Link href="/artist/verification" className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold text-purple-300 hover:text-white transition-colors"
+                style={{ background: 'rgba(124,58,237,0.12)', border: '1px solid rgba(168,85,247,0.25)' }}>
+                <UserCheck size={14} /> Get Verified
+              </Link>
+            )}
+            {!userLoading && user?.role === 'ARTIST' && artistProfile?.isVerified && (
+              <div className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold"
+                style={{ background: 'linear-gradient(135deg,rgba(124,58,237,0.25),rgba(168,85,247,0.15))', border: '1px solid rgba(168,85,247,0.4)', color: '#a855f7' }}>
+                <ShieldCheck size={14} /> Verified Artist
+              </div>
+            )}
           </div>
         </div>
 

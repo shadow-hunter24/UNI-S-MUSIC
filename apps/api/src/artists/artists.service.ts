@@ -2,12 +2,13 @@ import {
   Injectable,
   ConflictException,
   NotFoundException,
-  ForbiddenException,
+  BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { StorageService } from '../storage/storage.service';
 import { ApplyArtistDto } from './dto/apply-artist.dto';
 import { UpdateArtistDto } from './dto/update-artist.dto';
+import { ReviewVerificationDto } from './dto/review-verification.dto';
 import { Prisma } from '@prisma/client';
 
 @Injectable()
@@ -177,7 +178,145 @@ export class ArtistsService {
       }),
     ]);
 
+    // Trigger auto-verification check after follower count increases
+    await this.checkAutoVerification(artistId);
+
     return { message: 'Following artist' };
+  }
+
+  async checkAutoVerification(artistProfileId: string): Promise<void> {
+    const artist = await this.prisma.artistProfile.findUnique({
+      where: { id: artistProfileId },
+    });
+    if (!artist) return;
+    // Only auto-approve artists still in PENDING state
+    if (artist.verificationStatus !== 'PENDING') return;
+
+    const totalLikes = await this.prisma.track.aggregate({
+      where: { artistProfileId, status: 'PUBLISHED' },
+      _sum: { likeCount: true },
+    });
+
+    const likeCount = totalLikes._sum.likeCount ?? 0;
+    const meetsThreshold =
+      artist.totalFollowers >= 100 &&
+      artist.totalTracks >= 5 &&
+      likeCount >= 50;
+
+    if (meetsThreshold) {
+      await this.prisma.$transaction([
+        this.prisma.artistProfile.update({
+          where: { id: artistProfileId },
+          data: {
+            verificationStatus: 'APPROVED',
+            isVerified: true,
+            verifiedAt: new Date(),
+          },
+        }),
+        this.prisma.auditLog.create({
+          data: {
+            action: 'ARTIST_AUTO_VERIFIED',
+            entityType: 'ArtistProfile',
+            entityId: artistProfileId,
+            metadata: { reason: 'Auto-verified: met follower/track/like thresholds' },
+          },
+        }),
+      ]);
+    }
+  }
+
+  async reviewVerification(
+    actorId: string,
+    artistProfileId: string,
+    dto: ReviewVerificationDto,
+  ) {
+    const artist = await this.prisma.artistProfile.findUnique({
+      where: { id: artistProfileId },
+    });
+    if (!artist) throw new NotFoundException('Artist not found');
+
+    const updated = await this.prisma.$transaction(async (tx) => {
+      const updatedArtist = await tx.artistProfile.update({
+        where: { id: artistProfileId },
+        data: {
+          verificationStatus: dto.status,
+          isVerified: dto.status === 'APPROVED',
+          verifiedAt: dto.status === 'APPROVED' ? new Date() : null,
+        },
+      });
+
+      await tx.auditLog.create({
+        data: {
+          actorId,
+          action: `ARTIST_VERIFICATION_${dto.status}`,
+          entityType: 'ArtistProfile',
+          entityId: artistProfileId,
+          metadata: dto.reason ? { reason: dto.reason } : undefined,
+        },
+      });
+
+      return updatedArtist;
+    });
+
+    return updated;
+  }
+
+  async getVerificationStatus(userId: string) {
+    const artist = await this.prisma.artistProfile.findUnique({
+      where: { userId },
+    });
+    if (!artist) throw new NotFoundException('Artist profile not found');
+
+    const totalLikesAgg = await this.prisma.track.aggregate({
+      where: { artistProfileId: artist.id, status: 'PUBLISHED' },
+      _sum: { likeCount: true },
+    });
+    const likeCount = totalLikesAgg._sum.likeCount ?? 0;
+
+    return {
+      verificationStatus: artist.verificationStatus,
+      isVerified: artist.isVerified,
+      totalFollowers: artist.totalFollowers,
+      totalTracks: artist.totalTracks,
+      autoVerifyProgress: {
+        followers: { current: artist.totalFollowers, required: 100 },
+        tracks: { current: artist.totalTracks, required: 5 },
+        likes: { current: likeCount, required: 50 },
+      },
+    };
+  }
+
+  async getPendingVerifications(page = 1, limit = 20) {
+    const skip = (page - 1) * limit;
+    const [items, total] = await this.prisma.$transaction([
+      this.prisma.artistProfile.findMany({
+        where: { verificationStatus: 'PENDING' },
+        skip,
+        take: limit,
+        orderBy: { createdAt: 'asc' },
+        include: {
+          user: { select: { email: true, username: true } },
+        },
+      }),
+      this.prisma.artistProfile.count({ where: { verificationStatus: 'PENDING' } }),
+    ]);
+
+    return {
+      items: items.map((a) => ({
+        id: a.id,
+        stageName: a.stageName,
+        bio: a.bio ?? undefined,
+        imageUrl: a.imageUrl ?? undefined,
+        totalFollowers: a.totalFollowers,
+        totalTracks: a.totalTracks,
+        verificationStatus: a.verificationStatus,
+        createdAt: a.createdAt.toISOString(),
+        user: a.user,
+      })),
+      total,
+      page,
+      limit,
+    };
   }
 
   async unfollowArtist(userId: string, artistId: string) {

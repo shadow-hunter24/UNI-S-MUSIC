@@ -15,6 +15,7 @@ import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { ArtistsService } from './artists.service';
 import { ApplyArtistDto } from './dto/apply-artist.dto';
 import { UpdateArtistDto } from './dto/update-artist.dto';
+import { ReviewVerificationDto } from './dto/review-verification.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -54,6 +55,30 @@ export class ArtistsController {
     return this.artistsService.updateMyProfile(user.sub, dto);
   }
 
+  @Get('me/verification-status')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ARTIST)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get my verification status and auto-verify progress' })
+  getVerificationStatus(@CurrentUser() user: { sub: string }) {
+    return this.artistsService.getVerificationStatus(user.sub);
+  }
+
+  @Get('pending')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.MODERATOR)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get all pending artist verifications (admin/moderator)' })
+  getPendingVerifications(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.artistsService.getPendingVerifications(
+      page ? parseInt(page, 10) : 1,
+      limit ? parseInt(limit, 10) : 20,
+    );
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get public artist profile by ID' })
   findById(@Param('id') id: string) {
@@ -86,5 +111,18 @@ export class ArtistsController {
     @Query('limit') limit?: string,
   ) {
     return this.artistsService.getFollowers(artistId, cursor, limit ? parseInt(limit, 10) : 20);
+  }
+
+  @Patch(':id/verify')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.MODERATOR)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Review (approve/reject) an artist verification (admin/moderator)' })
+  reviewVerification(
+    @CurrentUser() user: { sub: string },
+    @Param('id') artistProfileId: string,
+    @Body() dto: ReviewVerificationDto,
+  ) {
+    return this.artistsService.reviewVerification(user.sub, artistProfileId, dto);
   }
 }
