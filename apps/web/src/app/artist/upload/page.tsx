@@ -279,7 +279,7 @@ export default function ArtistUploadPage() {
                 >
                   <Icon size={14} className={done || active ? 'text-white' : 'text-purple-400/50'} aria-hidden="true" />
                 </div>
-                <span className="text-xs hidden sm:block" style={{ color: active ? '#a855f7' : done ? 'rgba(196,181,212,0.6)' : 'rgba(196,181,212,0.3)' }}>
+                <span className="text-xs" style={{ color: active ? '#a855f7' : done ? 'rgba(196,181,212,0.6)' : 'rgba(196,181,212,0.3)' }}>
                   {s}
                 </span>
               </div>

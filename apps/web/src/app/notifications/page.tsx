@@ -122,7 +122,7 @@ function NotifRow({ notif, onRead }: { notif: Notification; onRead: (id: number)
       <div className="relative shrink-0">
         {notif.user ? (
           <div className="w-11 h-11 rounded-full overflow-hidden" style={{ border: '2px solid rgba(168,85,247,0.3)' }}>
-            <Image src={notif.user.avatar} alt={notif.user.name} width={44} height={44} className="object-cover w-full h-full" />
+            <Image src={notif.user.avatar} alt={notif.user.name} width={44} height={44} sizes="44px" className="object-cover w-full h-full" />
           </div>
         ) : (
           <div className="w-11 h-11 rounded-full flex items-center justify-center" style={{ background: bg }}>

@@ -70,7 +70,7 @@ export default function LyricsPage() {
             value={pastedLyrics}
             onChange={(e) => setPastedLyrics(e.target.value)}
             placeholder="Paste your song lyrics here…"
-            rows={8}
+            rows={5}
             className="w-full rounded-xl px-4 py-3 text-sm text-white placeholder-purple-400/40 outline-none resize-none"
             style={{ background: 'rgba(124,58,237,0.1)', border: '1px solid rgba(168,85,247,0.2)' }}
             onFocus={(e) => { e.target.style.borderColor = 'rgba(168,85,247,0.6)'; e.target.style.boxShadow = '0 0 0 3px rgba(124,58,237,0.15)'; }}

@@ -28,7 +28,7 @@ export default function ConnectPage() {
         style={{ background: 'rgba(13,1,33,0.85)', backdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(168,85,247,0.15)' }}
       >
         <div className="flex items-center justify-between mb-3">
-          <h1 className="text-lg font-bold text-white">Messaging &amp; Fan Engagement</h1>
+          <h1 className="text-lg font-bold text-white">Messaging</h1>
           <button
             aria-label="Compose message"
             className="w-9 h-9 rounded-full flex items-center justify-center transition-all hover:scale-105"

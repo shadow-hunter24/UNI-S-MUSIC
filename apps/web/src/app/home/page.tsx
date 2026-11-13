@@ -23,7 +23,7 @@ export default function HomePage() {
   const { data, isLoading } = useFeed();
 
   return (
-    <div className="min-h-screen flex flex-col pb-20" style={{ background: 'linear-gradient(180deg,#0d0121 0%,#130329 50%,#0d0121 100%)' }}>
+    <div className="min-h-screen flex flex-col pb-36" style={{ background: 'linear-gradient(180deg,#0d0121 0%,#130329 50%,#0d0121 100%)' }}>
 
       {/* Header */}
       <header className="sticky top-0 z-20 flex items-center justify-between px-4 py-3" style={{ background: 'rgba(13,1,33,0.85)', backdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(168,85,247,0.15)' }}>
@@ -52,7 +52,7 @@ export default function HomePage() {
         </Link>
 
         {/* Featured hero banner */}
-        <div className="relative w-full rounded-2xl overflow-hidden" style={{ height: 200 }}>
+        <div className="relative w-full rounded-2xl overflow-hidden h-48 sm:h-56">
           <Image
             src="https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&q=80"
             alt="Featured track"

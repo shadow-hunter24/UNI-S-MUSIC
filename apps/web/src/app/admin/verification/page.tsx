@@ -68,10 +68,12 @@ export default function VerificationPage() {
                   <p className="text-white font-semibold text-sm">{p.name}</p>
                   <p className="text-xs" style={{ color: 'rgba(196,181,212,0.5)' }}>{p.date}</p>
                 </div>
-                <p className="text-white font-bold text-sm shrink-0">{p.amount}</p>
-                <div className="flex gap-1 shrink-0">
-                  <button className="px-2.5 py-1 rounded-lg text-xs font-semibold" style={{ background: 'rgba(34,197,94,0.2)', color: '#22c55e' }}>Approve</button>
-                  <button className="px-2.5 py-1 rounded-lg text-xs font-semibold" style={{ background: 'rgba(239,68,68,0.15)', color: '#ef4444' }}>Reject</button>
+                <div className="flex flex-col sm:flex-row items-end sm:items-center gap-1 shrink-0">
+                  <p className="text-white font-bold text-sm">{p.amount}</p>
+                  <div className="flex gap-1">
+                    <button className="px-2.5 py-1 rounded-lg text-xs font-semibold" style={{ background: 'rgba(34,197,94,0.2)', color: '#22c55e' }}>Approve</button>
+                    <button className="px-2.5 py-1 rounded-lg text-xs font-semibold" style={{ background: 'rgba(239,68,68,0.15)', color: '#ef4444' }}>Reject</button>
+                  </div>
                 </div>
               </div>
             ))}

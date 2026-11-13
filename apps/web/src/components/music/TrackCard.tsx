@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { Heart, Play, Music } from 'lucide-react';
+import NextImage from 'next/image';
 import clsx from 'clsx';
 import { apiFetch } from '@/lib/api';
 
@@ -49,7 +50,7 @@ export function TrackCard({ id, title, artistName, coverImageUrl, playCount, lik
       {/* Cover */}
       <div className="aspect-square rounded-lg overflow-hidden relative flex items-center justify-center" style={{ background: 'linear-gradient(135deg,rgba(124,58,237,0.4),rgba(168,85,247,0.2))' }}>
         {coverImageUrl
-          ? <img src={coverImageUrl} alt={`${title} cover`} className="w-full h-full object-cover" />
+          ? <NextImage src={coverImageUrl} alt={`${title} cover`} fill sizes="(max-width:640px) 50vw, 160px" className="object-cover" />
           : <Music className="w-8 h-8 text-purple-400/50" aria-hidden="true" />
         }
         {/* Play overlay */}

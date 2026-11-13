@@ -113,7 +113,7 @@ export default function LandingPage() {
             <Music2 size={12} className="text-purple-400" aria-hidden="true" />
             Music for Everyone. Opportunities for Artists.
           </div>
-          <h1 className="text-5xl md:text-7xl font-black tracking-tight mb-2" style={{ background: 'linear-gradient(135deg,#e879f9,#a855f7,#7c3aed)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', filter: 'drop-shadow(0 0 30px rgba(168,85,247,0.6))' }}>
+          <h1 className="text-4xl sm:text-5xl md:text-7xl font-black tracking-tight mb-2" style={{ background: 'linear-gradient(135deg,#e879f9,#a855f7,#7c3aed)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', filter: 'drop-shadow(0 0 30px rgba(168,85,247,0.6))' }}>
             Uni&apos;s Music
           </h1>
           <p className="text-purple-200/80 text-base mb-1">Discover. Stream. Support.</p>
@@ -154,7 +154,7 @@ export default function LandingPage() {
             <h2 className="text-white font-bold text-base">Genres</h2>
             <Link href="/browse" className="text-xs text-purple-400 hover:text-purple-300">View All</Link>
           </div>
-          <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-2">
             {GENRES.map((g) => (
               <Link key={g.slug} href={`/genre/${g.slug}`}
                 className={`flex items-center justify-center py-3 rounded-xl text-xs font-bold text-white text-center transition-all hover:scale-105 bg-gradient-to-br ${g.color}`}

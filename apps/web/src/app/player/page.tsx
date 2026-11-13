@@ -18,7 +18,7 @@ export default function PlayerPage() {
 
   return (
     <div
-      className="min-h-screen flex flex-col px-4 py-6 overflow-hidden"
+      className="min-h-screen flex flex-col px-4 py-6 pb-10 overflow-hidden"
       style={{ background: 'linear-gradient(180deg,#1a0533 0%,#0d0121 40%,#130329 80%,#0d0121 100%)' }}
     >
       {/* Background glow */}

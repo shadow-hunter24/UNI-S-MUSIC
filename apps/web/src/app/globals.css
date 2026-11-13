@@ -64,4 +64,12 @@ body {
     border: 1px solid rgba(168, 85, 247, 0.4);
     box-shadow: 0 0 10px rgba(168, 85, 247, 0.15), inset 0 0 10px rgba(168, 85, 247, 0.05);
   }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
 }

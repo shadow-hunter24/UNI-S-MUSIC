@@ -41,7 +41,7 @@ const SIDEBAR_NAV = [
 export default function ArtistDashboard() {
   return (
     <div
-      className="min-h-screen flex pb-20"
+      className="min-h-screen flex pb-32"
       style={{ background: 'linear-gradient(180deg,#0d0121 0%,#130329 50%,#0d0121 100%)' }}
     >
       {/* Left sidebar — desktop only */}
@@ -164,8 +164,8 @@ export default function ArtistDashboard() {
                     <span className="text-white text-sm font-semibold truncate">{track.title}</span>
                   </div>
                   <div className="text-right">
-                    <p className="text-white text-xs font-semibold">{track.plays}</p>
-                    <p className="text-xs" style={{ color: '#22c55e' }}>{track.earnings}</p>
+                    <p className="text-white text-[10px] font-semibold">{track.plays}</p>
+                    <p className="text-[10px]" style={{ color: '#22c55e' }}>{track.earnings}</p>
                   </div>
                 </div>
               ))}

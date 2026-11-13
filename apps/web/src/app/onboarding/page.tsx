@@ -97,10 +97,14 @@ export default function OnboardingPage() {
                 role="tab"
                 aria-selected={i === slide}
                 onClick={() => setSlide(i)}
-                className="rounded-full transition-all"
-                style={{ width: i === slide ? 24 : 8, height: 8, background: i === slide ? 'linear-gradient(90deg,#7c3aed,#a855f7)' : 'rgba(168,85,247,0.3)' }}
+                className="p-3 rounded-full"
                 aria-label={`Slide ${i + 1}`}
-              />
+              >
+                <div
+                  className="rounded-full transition-all"
+                  style={{ width: i === slide ? 24 : 8, height: 8, background: i === slide ? 'linear-gradient(90deg,#7c3aed,#a855f7)' : 'rgba(168,85,247,0.3)' }}
+                />
+              </button>
             ))}
           </div>
 
