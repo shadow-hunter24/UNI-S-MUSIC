@@ -34,9 +34,9 @@ export default function HomePage() {
           <span className="font-black text-base" style={{ background: 'linear-gradient(135deg,#e879f9,#a855f7)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Uni&apos;s Music</span>
         </div>
         <div className="flex items-center gap-3">
-          <button aria-label="Notifications" className="text-purple-300/60 hover:text-purple-300 transition-colors">
+          <Link href="/notifications" aria-label="Notifications" className="text-purple-300/60 hover:text-purple-300 transition-colors">
             <Bell size={20} />
-          </button>
+          </Link>
           <Link href="/profile" aria-label="Profile" className="w-8 h-8 rounded-full flex items-center justify-center" style={{ background: 'rgba(124,58,237,0.3)', border: '1px solid rgba(168,85,247,0.3)' }}>
             <User size={15} className="text-purple-300" />
           </Link>

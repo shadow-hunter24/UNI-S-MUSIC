@@ -15,6 +15,8 @@ const PROTECTED = [
   '/genre',
   '/artists',
   '/browse',
+  '/profile',
+  '/notifications',
 ];
 
 // Routes that logged-in users should be bounced away from
