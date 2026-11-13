@@ -1,6 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'standalone',
+  // Remove 'standalone' — Cloudflare Pages uses @cloudflare/next-on-pages
+  // which compiles to the Workers edge runtime. 'standalone' generates a
+  // Node.js server and is incompatible with Cloudflare Pages.
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: '**.r2.cloudflarestorage.com' },

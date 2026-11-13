@@ -17,10 +17,18 @@ async function bootstrap() {
   app.use(compression());
   app.use(cookieParser());
 
-  // CORS
-  const webUrl = process.env.WEB_URL ?? 'http://localhost:3000';
+  // CORS — allow the web app origin(s).
+  // WEB_URL can be a comma-separated list for multiple origins
+  // e.g. "https://uni-s-music.pages.dev,http://localhost:3000"
+  const webUrlRaw = process.env.WEB_URL ?? 'http://localhost:3000';
+  const allowedOrigins = webUrlRaw.split(',').map((u) => u.trim()).filter(Boolean);
   app.enableCors({
-    origin: webUrl,
+    origin: (origin, callback) => {
+      // Allow requests with no origin (mobile apps, curl, Swagger)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+      callback(new Error(`CORS: origin ${origin} not allowed`));
+    },
     credentials: true,
   });
 
